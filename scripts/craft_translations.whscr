@@ -1,0 +1,37 @@
+<?wh
+LOADLIB "wh::filetypes/csv.whlib";
+LOADLIB "wh::files.whlib";
+LOADLIB "module::publisher/contenttypes.whlib";
+LOADLIB "module::publisher/internal/siteprofiles/reader.whlib";
+LOADLIB "module::publisher/siteapi.whlib";
+LOADLIB "module::system/resources.whlib";
+LOADLIB "module::system/database.whlib";
+LOADLIB "module::system/whfs.whlib";
+
+BLOB craftjson := GetWebhareResource("moduledata::webhare_transitioner/translations_en_us.csv");
+STRING data := BlobToString(craftjson,-1);
+
+RECORD ARRAY exportrows := ExcelTextParser(data,"","",TRUE);
+exportrows := SELECT translation
+                   , safename := GetXMLName(original)
+                FROM TokenArrayParser(exportrows[0].tokens, ArraySlice(exportrows,1));
+
+exportrows := SELECT safename
+                   , translation := Any(translation)
+                FROM exportrows
+            GROUP BY safename;
+
+STRING o := '\n\n';
+FOREVERY (RECORD row FROM exportrows)
+{
+    o := o || '<text tid="' || row.safename || '">' || EncodeHTML(row.translation) || '</text>\n';
+}
+
+STRING FUNCTION GetXMLName(STRING txt)
+{
+    txt := ToLowerCase(GetSafeFileName(txt));
+    txt := Substitute(txt, "-", "_");
+    RETURN txt;
+}
+
+print(o);

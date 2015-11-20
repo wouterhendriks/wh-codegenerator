@@ -1,0 +1,463 @@
+{
+  "assets": [],
+  "categories": [],
+  "fields": {
+    "fotos": {
+      "afbeelding": {
+        "name": "Afbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": [
+            "folder:1"
+          ],
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": ""
+        }
+      },
+      "groteAfbeelding": {
+        "name": "Grote afbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": ""
+        }
+      },
+      "headerfoto": {
+        "name": "Headerfoto",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1
+        }
+      },
+      "kleineAfbeelding": {
+        "name": "Kleine afbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 4
+        }
+      },
+      "middelgroteAfbeelding": {
+        "name": "Middelgrote afbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 2
+        }
+      }
+    },
+    "Projecten": {
+      "titelLang": {
+        "name": "Titel Lang",
+        "context": "global",
+        "instructions": "uitgebreide titel óf korte projectomschrijving",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    },
+    "Referenties": {
+      "referenties": {
+        "name": "referenties",
+        "context": "global",
+        "instructions": "Referentie van een persoon over een project met een quote en link naar een bestaand project",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "referentie": {
+            "name": "referentie",
+            "fields": {
+              "quote": {
+                "name": "quote",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText"
+              },
+              "persoon": {
+                "name": "persoon",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText"
+              },
+              "bedrijf": {
+                "name": "bedrijf",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText"
+              },
+              "tekst": {
+                "name": "tekst",
+                "required": 0,
+                "translatable": 0,
+                "type": "RichText"
+              },
+              "project": {
+                "name": "project",
+                "required": 1,
+                "translatable": 0,
+                "type": "Entries"
+              },
+              "uitlijning": {
+                "name": "uitlijning",
+                "required": 0,
+                "translatable": 0,
+                "type": "Dropdown"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Standaard": {
+      "inleiding": {
+        "name": "Inleiding",
+        "context": "global",
+        "instructions": "Inleidend tekstje",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": 1,
+          "initialRows": 4
+        }
+      },
+      "heading": {
+        "name": "Kop",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "PlainText",
+        "settings": null
+      }
+    },
+    "Wat we doen": {
+      "highlights": {
+        "name": "Highlights",
+        "context": "global",
+        "instructions": "Highlight blokken met elk een titel, beschrijving en afbeelding",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "highlight": {
+            "name": "highlight",
+            "fields": {
+              "titel": {
+                "name": "titel",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText"
+              },
+              "beschrijving": {
+                "name": "beschrijving",
+                "required": 1,
+                "translatable": 0,
+                "type": "RichText"
+              },
+              "afbeelding": {
+                "name": "afbeelding",
+                "required": 1,
+                "translatable": 0,
+                "type": "Assets"
+              },
+              "uitlijning": {
+                "name": "uitlijning",
+                "required": 0,
+                "translatable": 0,
+                "type": "Dropdown"
+              }
+            }
+          }
+        }
+      },
+      "voorbeeldtekst": {
+        "name": "Voorbeeldtekst",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "Hieronder een selectie van ons werk",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "wervendetekst": {
+        "name": "Wervendetekst",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "Ook interieur op maat? Neem contact op!",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    }
+  },
+  "globals": [],
+  "sections": {
+    "bedankt": {
+      "name": "bedankt",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "bedankt",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "bedankt",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "bedankt": {
+          "name": "bedankt",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Tab 1": {
+                "inleiding": 0,
+                "afbeelding": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "homepage": {
+      "name": "Homepage ",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "index",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 1,
+          "urlFormat": "__home__",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "homepage": {
+          "name": "Homepage ",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Inhoud": {
+                "headerfoto": 0,
+                "heading": 0,
+                "inleiding": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "pagina": {
+      "name": "pagina",
+      "type": "structure",
+      "hasUrls": 1,
+      "template": "pagina/_entry",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "{slug}",
+          "nestedUrlFormat": "{parent.uri}/{slug}"
+        }
+      },
+      "entryTypes": {
+        "watwedoen": {
+          "name": "Wat we doen overzichtspagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Standaard": {
+                "inleiding": 1
+              }
+            }
+          }
+        },
+        "watwedoenDetail": {
+          "name": "Wat we doen detail pagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Tab1": {
+                "headerfoto": 1,
+                "highlights": 0,
+                "inleiding": 1,
+                "voorbeeldtekst": 1,
+                "afbeelding": 0,
+                "wervendetekst": 1
+              }
+            }
+          }
+        },
+        "contact": {
+          "name": "Contactpagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Tab 1": {
+                "inleiding": 0,
+                "afbeelding": 0
+              }
+            }
+          }
+        },
+        "projecten": {
+          "name": "Project overzichtspagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Standaard": {
+                "heading": 0,
+                "inleiding": 1
+              }
+            }
+          }
+        },
+        "projectenDetail": {
+          "name": "Project detailpagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Projecten": {
+                "titelLang": 0,
+                "inleiding": 0,
+                "headerfoto": 0,
+                "groteAfbeelding": 0,
+                "middelgroteAfbeelding": 0,
+                "kleineAfbeelding": 0
+              }
+            }
+          }
+        },
+        "referenties": {
+          "name": "Referentie overzichtspagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Referenties": {
+                "heading": 0,
+                "referenties": 0
+              }
+            }
+          }
+        },
+        "overons": {
+          "name": "Over ons pagina",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Tab 1": {
+                "headerfoto": 0,
+                "heading": 0,
+                "highlights": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "contenttabs": [],
+  "tags": []
+}

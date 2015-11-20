@@ -1,0 +1,309 @@
+{
+  "assets": [],
+  "categories": [],
+  "fields": {
+    "Standaard": {
+      "body": {
+        "name": "Body",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "RichText",
+        "settings": {
+          "configFile": "Standard.json"
+        }
+      },
+      "category": {
+        "name": "Categorie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Entries",
+        "settings": {
+          "sources": [
+            "section:3"
+          ],
+          "limit": 1
+        }
+      },
+      "photo": {
+        "name": "Foto",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": 1,
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1
+        }
+      },
+      "photos": {
+        "name": "Foto's",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": 1,
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": ""
+        }
+      },
+      "client": {
+        "name": "Opdrachtgever",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "project": {
+        "name": "Project",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "showOnHomepage": {
+        "name": "Toon op homepage",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      }
+    }
+  },
+  "globals": [],
+  "sections": {
+    "contact": {
+      "name": "Contact",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "_contact",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "contact",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "contact": {
+          "name": "Contact",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Algemeen": {
+                "body": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "detailPages": {
+      "name": "Detailpagina's",
+      "type": "structure",
+      "hasUrls": 1,
+      "template": "_photos_detail/_entry.twig",
+      "maxLevels": 1,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "foto/{slug}",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "detailPages": {
+          "name": "Detailpagina's",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Algemeen": {
+                "showOnHomepage": 0,
+                "category": 1,
+                "project": 0,
+                "client": 0,
+                "body": 1,
+                "photos": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "photos": {
+      "name": "Foto's",
+      "type": "structure",
+      "hasUrls": 0,
+      "template": null,
+      "maxLevels": 1,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": null,
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "photos": {
+          "name": "Foto's",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Algemeen": {
+                "category": 0,
+                "photo": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "homepage": {
+      "name": "Home",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "index",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "__home__",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "homepage": {
+          "name": "Homepage ",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "fields": []
+          }
+        }
+      }
+    },
+    "siteStructure": {
+      "name": "Site-structuur",
+      "type": "structure",
+      "hasUrls": 1,
+      "template": "_page",
+      "maxLevels": 2,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "{slug}",
+          "nestedUrlFormat": "{parent.uri}/{slug}"
+        }
+      },
+      "entryTypes": {
+        "mainCategory": {
+          "name": "Hoofdcategorie (geen losse pagina)",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "fields": []
+          }
+        },
+        "photos": {
+          "name": "Alleen foto's",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "fields": []
+          }
+        },
+        "detail": {
+          "name": "Detail (tekst en foto's)",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "fields": []
+          }
+        }
+      }
+    },
+    "werkwijze": {
+      "name": "Werkwijze",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "_photos_detail/_entry",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "werkwijze",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "werkwijze": {
+          "name": "Werkwijze",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Algemeen": {
+                "body": 0,
+                "photos": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "contenttabs": [],
+  "tags": []
+}
