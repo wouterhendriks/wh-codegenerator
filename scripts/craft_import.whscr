@@ -1,4 +1,5 @@
 <?wh
+LOADLIB "wh::os.whlib";
 LOADLIB "wh::files.whlib";
 LOADLIB "module::publisher/contenttypes.whlib";
 LOADLIB "module::publisher/internal/siteprofiles/reader.whlib";
@@ -7,33 +8,47 @@ LOADLIB "module::system/resources.whlib";
 LOADLIB "module::system/database.whlib";
 LOADLIB "module::system/whfs.whlib";
 
-// FIXME: We probably shouldn't name all XML namespaces '.../filetype/... and .../foldertype/...'
+STRING jsonpath := "moduledata::webhare_transitioner/sections_maple.json"; // path to JSON source file
+STRING baseurl := "http://www.themaple.nl/"; // used in XML namespaces
+STRING sitename := "The Maple"; // used for the 'addfsobjects' option
+STRING lang := "nl"; // "nl", "en"
+STRING lib := "lib/the_maple.whlib"; // for <bodyrenderen>
 
-STRING baseurl := "http://www.themaple.nl/";
-STRING sitename := "The Maple";
-STRING jsonpath := "moduledata::webhare_transitioner/sections_maple.json";
+RECORD args := ParseArguments(GetConsoleArguments(),
+                              [[ name := "whlib", type := "switch" ]
+                              ,[ name := "siteprl", type := "switch" ]
+                              ,[ name := "addfsobjects", type := "switch" ]
+                              ,[ name := "help", type := "switch" ]
+                              ]);
 
-STRING defaultboxname := "Instellingen";
-//STRING defaultboxname := "Settings";
+IF (args.help)
+{
+  PRINT("Syntax: runscript craft_import.whscr [ --whlib ] [ --siteprl ] [ --addfsobjects ]\n");
+  RETURN;
+}
 
+STRING defaultboxname := lang = "nl" ? "Instellingen" : "Settings";
 
 BLOB craftjson := GetWebhareResource(jsonpath);
 RECORD jsondata := DecodeJSON(BloBToString(craftjson,-1));
 
 // convert Craft fields and sections for WebHare's siteprofile generation function
-// title, name, filetypes, foldertypes, members
-RECORD ARRAY siteprofilesections := GenerateSiteProfileSectionsData(jsondata); 
+RECORD ARRAY siteprofilesections := GenerateSiteProfileSectionsData(jsondata); // title, name, filetypes, foldertypes, members
 
-// Generate XML output
 RECORD siteprofileinfo := [ baseurl := baseurl
                           , sections := siteprofilesections
                           ];
 
-STRING siteprofxml := GenerateSiteprofileData(siteprofileinfo);
+// Generate XML output
+IF (args.siteprl)
+{
+  STRING siteprofxml := GenerateSiteprofileData(siteprofileinfo);
 
-AddFilesAndFolders(siteprofileinfo);
- 
-print(siteprofxml);
+  print(siteprofxml);
+}
+
+IF (args.addfsobjects)
+  AddFilesAndFolders(siteprofileinfo);
 
 //********************************************************************************
 //
@@ -75,7 +90,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofileData(RECORD siteprofileinfo)
         {
             o := o || '<contenttype namespace="' || siteprofileinfo.baseurl || 'xmlns/filetype/' || GetXMLName(siteprofilesection.name) || '" />\n\n';
         }
-        ELSE 
+        ELSE
         {
             o := o || '<contenttype namespace="' || siteprofileinfo.baseurl || 'xmlns/filetype/' || GetXMLName(siteprofilesection.name) || '">\n';
 
@@ -134,12 +149,12 @@ PUBLIC MACRO AddFilesAndFolders(RECORD siteprofileinfo)
                                     , title := foldertype.title
                                     , type := OpenWHFSType(xmlns)->id
                                     ];
-  
+
                 IF (RecordExists(SELECT FROM system.fs_objects WHERE parent = root->id AND ToUpperCase(name) = ToUpperCase(newfolder.name)))
                     CONTINUE;
 
                 root->CreateFolder(newfolder);
-            }   
+            }
         }
         ELSE
         {
@@ -160,7 +175,7 @@ PUBLIC MACRO AddFilesAndFolders(RECORD siteprofileinfo)
                     CONTINUE;
 
                 root->CreateFile(newfile);
-            }   
+            }
         }
     }
 
@@ -213,7 +228,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data)
         FOREVERY (RECORD childmember FROM childmembers)
         {
             xml := xml || '  ' || GetSiteProfileMember(childmember);
-        } 
+        }
 
         xml := xml || "  </member>\n";
 
@@ -264,7 +279,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, RECORD siteprofileinfo)
                || '    <p:whfsinstance name="fsinstance" typedef="' || siteprofileinfo.baseurl || 'xmlns/filetype/' || GetXMLName(data.name) || '" />\n'
                || '  </compositions>\n'
                || '  <newtab title="' || data.title || '">\n';
-    
+
     xml := xml || AddBoxesToPropertyEditor(data.members);
 
     xml := xml || '  </newtab>\n'
@@ -300,7 +315,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
     STRING xml;
 
     RECORD ARRAY boxes := [[ title := defaultboxname
-                           , members := DEFAULT RECORD ARRAY 
+                           , members := DEFAULT RECORD ARRAY
                            ]
                           ];
 
@@ -350,7 +365,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                         || 'cellname="' || GetXMLName(siteprofmember.name) || '" '
                         || 'title="' || siteprofmember.title || '" '
                         || (siteprofmember.required ? 'required="true" ' : '')
-                        || '/>';                    
+                        || '/>';
                     */
                     xml := xml
                         || '      <line>\n'
@@ -364,7 +379,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                         || '      </line>';
                 }
             }
-            ELSE 
+            ELSE
             {
                 xml := xml || '      '
                     || '<textedit composition="fsinstance" '
@@ -377,7 +392,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
         }
         CASE "richdocument"
         {
-            xml := xml 
+            xml := xml
                 || '      <rte composition="fsinstance"\n'
                 || '           cellname="' || GetXMLName(siteprofmember.name) || '"\n'
                 || '           height="1pr"\n'
@@ -502,6 +517,7 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, RECORD siteprofileinfo)
             || '<apply>\n'
             || '  <to type="file" filetype="' || xmlns_file || '" />\n'
             || '  <extendproperties name="' || GetXMLName(filetype.name) || '" />\n'
+            || '  <bodyrenderer library="' || lib || '" objectname="' || filetype.name || 'Page" />\n'
             || '</apply>';
     }
 
@@ -547,7 +563,7 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
         {
             CASE "SINGLE" // in WebHare terms: a file with meta data
             {
-                INSERT [ title := section.name 
+                INSERT [ title := section.name
                        , name := GetXMLName(section.name)
                        ] INTO filetypes AT END;
             }
@@ -555,18 +571,18 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
                , "STRUCTURE" // in WebHare terms: a folder tree, no files; meta data for the folders
                              // ADDME: (in Craft these folders can be different types, support that!)
             {
-                INSERT [ title := section.name 
+                INSERT [ title := section.name
                        , name := GetXMLName(section.name)
                        ] INTO filetypes AT END;
 
-                INSERT [ title := section.name 
+                INSERT [ title := section.name
                        , name := GetXMLName(section.name)
                        ] INTO foldertypes AT END;
             }
             DEFAULT
             {
                 Abort("Unknown Craft section type '" || sectiondata.value.type || "'");
-            }            
+            }
         }
 
         RECORD ARRAY members := ConvertFieldsToMembers(craftfields);
@@ -580,7 +596,7 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
                ] INTO siteprofilesections AT END;
     }
 
-    RETURN siteprofilesections;    
+    RETURN siteprofilesections;
 }
 
 RECORD ARRAY FUNCTION GetCraftFieldsByEntryTypes(RECORD ARRAY entrytypes, RECORD ARRAY allcraftfields)
@@ -597,7 +613,7 @@ RECORD ARRAY FUNCTION GetCraftFieldsByEntryTypes(RECORD ARRAY entrytypes, RECORD
                 titleFormat: null,
                 fieldLayout: {
                     tabs: {
-                    About Page: {                     
+                    About Page: {
                         pageTitle: 1,                 <------- Find these specific fields in the main 'fields' record
                         pageDescription: 1,
                         aboutTextColor: 0,
@@ -662,7 +678,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
         RECORD curmember := [ name := field.name
                             , title := CellExists(field, "title") ? field.title : field.name
                             , type := ""
-                            , required := CellExists(field, "required") AND field.required = 1 
+                            , required := CellExists(field, "required") AND field.required = 1
                             , comments := ""
                             , members := DEFAULT RECORD ARRAY
                             , options := DEFAULT RECORD ARRAY
@@ -680,7 +696,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
             {
                 curmember.type := "string";
                 curmember.comments := "Color";
-                curmember.settings := [ specialtype := "color" 
+                curmember.settings := [ specialtype := "color"
                                       ];
             }
             CASE "PLAINTEXT"
@@ -691,7 +707,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
             {
                 curmember.type := "file";
                 curmember.comments := "Image";
-                curmember.settings := [ specialtype := "image" 
+                curmember.settings := [ specialtype := "image"
                                       ];
             }
             CASE "RICHTEXT"
