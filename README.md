@@ -8,4 +8,6 @@ It also contains scripts to automate the transition from other CMSes to WebHare.
 
 To install this module:
 
+```
 git clone https://github.com/WouterHendriks/wh-codegenerator.git "$(wh getdatadir)installedmodules/codegenerator"
+```
