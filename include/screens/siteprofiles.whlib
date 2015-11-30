@@ -25,7 +25,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
         +OPTIONS: RECORD ARRAY[0] // so far: Craft specific
         +SETTINGS: DEFAULT RECORD // so far: Craft specific
     */
-    RECORD prefillsettings := DecodeHSON(GetRegistryKey(-1, "codegenerator.siteprofiles.settings", ""));
+    STRING regsettings := GetRegistryKey(-1, "codegenerator.siteprofiles.settings", "");
+    RECORD prefillsettings := regsettings = "" ? DEFAULT RECORD : DecodeHSON(regsettings);
 
     IF (RecordExists(prefillsettings))
     {
