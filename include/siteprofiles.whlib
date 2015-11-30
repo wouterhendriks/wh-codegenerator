@@ -1,0 +1,505 @@
+<?wh
+LOADLIB "wh::files.whlib";
+
+STRING defaultboxname := "Instellingen";
+//STRING defaultboxname := lang = "nl" ? "Instellingen" : "Settings";
+
+PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesection)
+{
+  STRING o := '  <!-- ***********************************************************************\n'
+           || '\n'
+           || '       ' || siteprofilesection.title || 's\n'
+           || '\n'
+           || '  ***********************************************************************  -->\n';
+
+  FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
+  {
+    o := o || GetFolderType(foldertype, baseurl) || "\n\n";
+  }
+
+  FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
+  {
+    o := o || GetFileType(filetype, baseurl)
+           || "\n\n";
+  }
+
+  // add <contenttye> with <member>s and <propertyeditor>s
+  IF (Length(siteprofilesection.members) = 0) // no members, just a <contenttype> then
+  {
+    o := o || '  <contenttype namespace="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n\n';
+  }
+  ELSE
+  {
+    o := o || '  <contenttype namespace="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '">\n';
+
+    RECORD ARRAY members;
+    FOREVERY (RECORD mem FROM siteprofilesection.members)
+    {
+      IF (NOT RecordExists(SELECT FROM members WHERE ToUpperCase(members.name) = ToUpperCase(mem.name)))
+      {
+        INSERT mem INTO members AT END;
+      }
+    }
+
+    FOREVERY (RECORD smember FROM members)
+    {
+      o := o || GetSiteProfileMember(smember);
+    }
+
+    o := o || '  </contenttype>\n\n'
+           || GetPropertyEditor([ members := siteprofilesection.members
+                                , name := siteprofilesection.name
+                                , title := siteprofilesection.title
+                                ]
+                              , baseurl)
+           || "\n\n"
+           || GetApplies(siteprofilesection, baseurl) || "\n\n";
+  }
+
+  RETURN o;
+}
+
+STRING FUNCTION GetFileType(RECORD data, STRING baseurl)
+{
+  //ADDME: Option to add rich text document instead of custom file types; set blobiscontent to TRUE then
+
+  BOOLEAN addwebpage := NOT CellExists(data, "no_webpage") OR data.no_webpage = FALSE;
+
+  STRING o := '  <filetype typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.title) || '"\n'
+           || '            title="' || EncodeHTML(data.title) || '"\n'
+           || '            blobiscontent="false"\n'
+           || '            ispublishable="true"\n'
+           || '            tolliumicon="tollium:files/text_plain"\n';
+
+  IF (addwebpage)
+  {
+    o := o || '            isacceptableindex="false"\n'
+           || '            ispublishedassubdir="true"\n'
+           || '            needstemplate="true"\n';
+  }
+
+  o := o || '            />';
+
+  RETURN o;
+}
+
+STRING FUNCTION GetFolderType(RECORD data, STRING baseurl)
+{
+  RETURN '  <foldertype typedef="' || baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(data.title) || 's"\n'
+      || '              title="' || EncodeHTML(data.title) || 's"\n'
+      || '              tolliumicon="tollium:folders/projects"\n'
+      || '              indexfile="contentlisting"\n'
+      || '              protectindexfile="true"\n'
+      || '              >\n'
+      || '  </foldertype>\n'// we probably want to add something within
+      || '\n'
+      || '  <contenttype namespace="' || baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(data.title) || 's">\n'
+      || '  </contenttype>';
+}
+
+STRING FUNCTION GetSiteProfileMember(RECORD data)
+{
+  IF (ToUpperCase(data.type) = "ARRAY")
+  {
+    STRING xml := '    <member name="' || GetSiteProfileXMLName(data.name) || '" type="array">\n'
+               || '      <member name="membertype" type="string" />\n';
+
+    RECORD ARRAY childmembers := SELECT *
+                                      , name := GetSiteProfileXMLName(name)
+                                   FROM data.members;
+
+    childmembers := SELECT childmembers.name
+                         , type := Any(childmembers.type)
+                         , comments := Any(childmembers.comments)
+                      FROM childmembers
+                  GROUP BY childmembers.name;
+
+    FOREVERY (RECORD childmember FROM childmembers)
+      xml := xml || '  ' || GetSiteProfileMember(childmember);
+
+    xml := xml || "    </member>\n";
+
+    RETURN xml;
+  }
+
+  STRING xml := '    <member name="' || GetSiteProfileXMLName(data.name) || '" type="';
+
+  SWITCH (ToUpperCase(data.type))
+  {
+    CASE "STRING"
+    {
+      xml := xml || 'string"';
+    }
+    CASE "RICHDOCUMENT"
+    {
+      xml := xml || 'richdocument"';
+    }
+    CASE "FILE","IMAGE"
+    {
+      xml := xml || 'file" publish="true"';
+    }
+    DEFAULT
+    {
+      xml := xml || data.type || '"';
+    }
+  }
+
+  xml := xml || ' />';
+
+  IF (data.comments != "")
+    xml := xml || ' <!-- ' || data.comments || ' -->';
+
+  RETURN xml || "\n";
+}
+
+PUBLIC STRING FUNCTION GetSiteProfileXMLName(STRING txt)
+{
+  txt := ToLowerCase(GetSafeFileName(txt));
+  txt := Substitute(txt, "-", "_");
+  RETURN txt;
+}
+
+STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
+{
+    STRING xml := '  <propertyeditor name="' || GetSiteProfileXMLName(data.name) || '">\n'
+               || '    <compositions>\n'
+               || '      <p:whfsinstance name="fsinstance" typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.name) || '" />\n'
+               || '    </compositions>\n'
+               || '    <newtab title="' || data.title || '">\n';
+
+    xml := xml || AddBoxesToPropertyEditor(data.members);
+
+    xml := xml || '    </newtab>\n'
+               || '  </propertyeditor>';
+
+    // add screens for array types
+    RECORD ARRAY memberarraytypes := SELECT * FROM data.members WHERE type = "array";
+    FOREVERY (RECORD memberarraytype FROM memberarraytypes)
+    {
+        FOREVERY (RECORD arraytype FROM memberarraytype.settings.types)
+        {
+            xml := xml
+                || '\n\n  <screen title="' || memberarraytype.title || '" name="edit_' || GetSiteProfileXMLName(memberarraytype.name) || '_' || GetSiteProfileXMLName(arraytype.name) || '" implementation="rowedit" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n'
+                || '    <compositions>\n'
+                || '      <record name="row" />\n'
+                || '    </compositions>\n'
+                || '    <body>\n';
+
+            xml := xml || AddBoxesToPropertyEditor(arraytype.members);
+
+            xml := xml
+                || '      <defaultformbuttons buttons="ok cancel" />\n'
+                || '    </body>\n'
+                || '  </screen>';
+        }
+    }
+
+    RETURN xml;
+}
+
+STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
+{
+  RECORD ARRAY boxes := [[ title := defaultboxname
+                         , members := DEFAULT RECORD ARRAY
+                         ]
+                        ];
+
+  FOREVERY (RECORD siteprofmember FROM siteprofmembers)
+  {
+    IF (siteprofmember.type iN ["image","array","richdocument"]) // own box
+      INSERT [ title := siteprofmember.title, members := [ siteprofmember ] ] INTO boxes AT END;
+    ELSE // default box
+      INSERT siteprofmember INTO boxes[0].members AT END;
+  }
+
+  STRING xml;
+
+  FOREVERY (RECORD box FROM boxes)
+  {
+    IF (Length(box.members) > 0)
+    {
+      xml := xml ||  '      <box title="' || box.title || '" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n';
+
+      FOREVERY (RECORD siteprofmember FROM box.members)
+        xml := xml || GetPropertyEditorElement(siteprofmember) || "\n";
+
+      xml := xml ||  '      </box>\n';
+    }
+  }
+
+  RETURN xml;
+}
+
+STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
+{
+    STRING xml;
+
+    SWITCH (siteprofmember.type)
+    {
+        CASE "string"
+        {
+            IF (RecordExists(siteprofmember.settings) AND CellExists(siteprofmember.settings, "specialtype") AND siteprofmember.settings.specialtype != "")
+            {
+                IF (siteprofmember.settings.specialtype = "color")
+                {
+                    /*
+                    // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
+                    // https://gitlab.b-lex.com/webhare/webhare/issues/335
+                    xml := xml || '      '
+                        || '<coloredit composition="fsinstance" '
+                        || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                        || 'title="' || siteprofmember.title || '" '
+                        || (siteprofmember.required ? 'required="true" ' : '')
+                        || '/>';
+                    */
+                    xml := xml
+                        || '        <line>\n'
+                        || '          <textedit composition="fsinstance" '
+                        || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                        || 'title="' || siteprofmember.title || '" '
+                        || (siteprofmember.required ? 'required="true" ' : '')
+                        || 'width="10x" '
+                        || '/>\n'
+                        || '          <text title="" value="(#cc00ff)" />\n'
+                        || '        </line>';
+                }
+            }
+            ELSE
+            {
+                xml := xml || '        '
+                    || '<textedit composition="fsinstance" '
+                    || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                    || 'title="' || siteprofmember.title || '" '
+                    || (siteprofmember.required ? 'required="true" ' : '')
+                    || 'width="1pr" '
+                    || '/>';
+            }
+        }
+        CASE "richdocument"
+        {
+            xml := xml
+                || '        <rte composition="fsinstance"\n'
+                || '             cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+                || '             height="1pr"\n'
+                || '             minwidth="400px"\n'
+                || '             minheight="250px"\n'
+                || '             errorlabel="' || siteprofmember.title || '"\n'
+                || '             tagfilter="b i a-href img ul ol li strike"\n'
+                || (siteprofmember.required ? '             required="true"\n' : '')
+                || '             type="html-block">\n'
+                || '          <linkhandlers>\n'
+                || '            <p:internallinks name="internallinkhandler' || Substitute(siteprofmember.name, " ", "") || '" />\n'
+                || '          </linkhandlers>\n'
+                || '        </rte>';
+        }
+        CASE "array"
+        {
+            //FIXME: Only add rowdatatype setup if we have more than one type
+
+            xml := xml
+                || '        <arrayedit composition="fsinstance"\n'
+                || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+                || '                   rowtypename="membertype"\n'
+                //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+                || '                   orderable="true"\n'
+                || '                   rowselect="true"\n'
+                || '                   width="1pr"\n'
+                || '                   height="1pr"\n'
+                || '                   >\n'
+                || '          <column type="text" name="membertype" title="Type" />\n\n';
+
+            FOREVERY (RECORD membertype FROM siteprofmember.settings.types)
+            {
+                xml := xml || '          '
+                    || '<rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
+                    || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
+                    || 'title="' || membertype.title || '" '
+                    || '/>\n';
+            }
+
+            xml := xml
+                || '        </arrayedit>';
+        }
+        CASE "image"
+        {
+            xml := xml
+                || '        <imageedit composition="fsinstance"\n'
+                || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+                || '                   imagewidth="300px"\n'
+                || '                   imageheight="300px"\n'
+                || '                   preserveifunchanged="true"\n'
+                || '                   errorlabel="' || siteprofmember.title || '"\n'
+                || '                   width="1pr"\n'
+                || '                   height="1pr"\n'
+                || (siteprofmember.required ? '                   required="true"\n' : '')
+                || '                   />';
+        }
+        CASE "whfsref"
+        {
+            xml := xml
+                || '        <!-- FIXME: link this field to something -->\n'
+                || '        <p:browseforobject composition="fsinstance"\n'
+                || '                           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+                || '                           title="' || siteprofmember.title || '"\n'
+                || '                           width="1pr"\n'
+                || '                           acceptfolders="false"\n'
+                || '                           acceptfiles="true"\n'
+                || '                           fullpath="/"\n'
+                || (siteprofmember.required ? '                           required="true"\n' : '')
+                || '                           />';
+        }
+        CASE "boolean"
+        {
+            xml := xml
+                || '        <line layout="left">\n'
+                || '          <checkbox composition="fsinstance" '
+                || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                || 'title="" '
+                || 'label="' || siteprofmember.title || '" '
+                || '/>\n'
+                || '        </line>';
+        }
+        DEFAULT
+        {
+            IF (siteprofmember.type NOT IN ["FIXME"]) abort(siteprofmember.type);
+            xml := xml || '      <!-- ' || siteprofmember.comments || ' -->';
+        }
+    }
+
+    RETURN xml;
+}
+
+STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
+{
+  STRING xml;
+
+  FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
+  {
+    STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
+    STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+
+    xml := xml
+        || '  <!-- Only allow the custom file type in this folder -->\n'
+        || '  <apply>\n'
+        || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
+        || '    <denyfiletype typedef="*" />\n'
+        || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
+        || '  </apply>\n\n'
+
+        || '  <!-- Extend the interface for non-index files -->\n'
+        || '  <apply>\n'
+        || '    <and>\n'
+        || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
+        || '      <to type="file" parenttype="' || xmlns_folder || '" />\n'
+        || '    </and>\n'
+        || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+        || '  </apply>\n\n';
+  }
+
+  FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
+  {
+    STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(filetype.title);
+
+    xml := xml
+        || '  <!-- Run the template for our custom file type -->\n'
+        || '  <apply>\n'
+        || '    <to type="file" filetype="' || xmlns_file || '" />\n'
+        || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(filetype.title) || 'spage" />\n'
+        || '  </apply>';
+  }
+
+  RETURN xml;
+}
+
+PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD siteprofilesection)
+{
+  STRING title_plural := siteprofilesection.title || "s";
+  STRING name := GetSiteProfileXMLName(siteprofilesection.title);
+  STRING name_plural := name || "s";
+  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
+
+  STRING o := '  PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
+           || '  <\n'
+           || '    RECORD wittydata;\n'
+           || '    BOOLEAN isindex;\n'
+           || '\n'
+           || '    UPDATE PUBLIC MACRO PrepareForRendering(OBJECT webdesign)\n'
+           || '    {\n'
+           || '      this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
+           || '\n'
+           || '       IF (this->isindex)\n'
+           || '         this->PrepareForIndex(webdesign);\n'
+           || '       ELSE\n'
+           || '         this->PrepareForDetails(webdesign);\n'
+           || '    }\n'
+           || '\n'
+           || '    MACRO PrepareForIndex(OBJECT webdesign)\n'
+           || '    {\n'
+           || '      OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
+           || '\n'
+           || '      // collect ' || name_plural || '\n'
+           || '      RECORD ARRAY ' || name_plural || ' := \n'
+           || '             SELECT id\n'
+           || '                  , title\n'
+           || '                  , link := url\n'
+           || '               FROM system.fs_objects\n'
+           || '              WHERE parent = webdesign->targetfolder->id\n'
+           || '                    AND type = ' || name || 'type->id\n'
+           || '                    AND title != ""\n'
+           || '                    AND indexurl != ""\n'
+           || '           ORDER BY ordering, ToUpperCase(title), id;\n'
+           || '\n'
+           || '      ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n'
+           || '\n'
+           || '      this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n'
+           || '                         ];\n'
+           || '    }\n'
+           || '\n'
+           || '    MACRO PrepareForDetails(OBJECT webdesign)\n'
+           || '    {\n'
+           || '      OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
+           || '\n'
+           || '      RECORD ' || name || 'data := ' || name || 'type->GetInstanceData(webdesign->targetobject->id);\n'
+           || '\n'
+           || '      this->wittydata := [ ' || name || 'data := ' || name || 'data ];\n'
+           || '    }\n'
+           || '\n'
+           || '    UPDATE PUBLIC MACRO RunBody(OBJECT webdesign)\n'
+           || '    {\n'
+           || '      EmbedWittyComponent(this->isindex ? "' || name_plural || 'index" : "' || name || 'details", this->wittydata);\n'
+           || '    }\n'
+           || '  >;\n';
+
+  RETURN o;
+}
+
+PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
+{
+  STRING title_plural := siteprofilesection.title || "s";
+  STRING name := GetSiteProfileXMLName(siteprofilesection.title);
+  STRING name_plural := name || "s";
+  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
+
+  STRING o := '[component ' || name_plural || 'index]\n'
+           || '  [forevery ' || name_plural || ']\n';
+
+  // FIXME: Print stuff based on member type
+  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+  {
+    o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
+  }
+
+  o := o || '  [/forevery]\n'
+         || '[/component]\n'
+         || '\n'
+         || '[component ' || name || 'details]\n';
+
+  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+  {
+    o := o || '  ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
+  }
+
+  o := o || '[/component]\n';
+
+  RETURN o;
+}

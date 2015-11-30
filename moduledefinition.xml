@@ -3,10 +3,32 @@
 
   <meta>
     <version>1.0</version>
-    <description>WebHare Transitioner</description>
+    <description>WebHare Code Generator</description>
     <author>Nerds &amp; Company</author>
     <packaging download="true">
     </packaging>
   </meta>
+
+  <portal>
+    <application group="apps" name="siteprofile" title="Siteprofile code generator" screen="siteprofiles.main">
+      <accesscheck>
+        <requireright right="superuser" />
+      </accesscheck>
+    </application>
+  </portal>
+
+  <rights>
+    <right name="superuser" title="Ter Brugge - Barcode Scanner">
+      <impliedby right="system:sysop" />
+    </right>
+  </rights>
+
+  <registry>
+    <node name="codegenerator">
+      <node name="siteprofiles">
+        <string name="settings"  />
+      </node>
+    </node>
+  </registry>
 
 </module>

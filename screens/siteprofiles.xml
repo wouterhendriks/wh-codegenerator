@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screens xmlns="http://www.webhare.net/xmlns/tollium/screens"
+         xmlns:wrd="http://www.webhare.net/xmlns/wrd/components"
+         lib="screens/siteprofiles.whlib"
+         >
+
+  <messageboxes gid=".messages">
+    <messagebox name="deleteperson" icon="question" buttons="yes no" />
+  </messageboxes>
+
+  <screen name="main" tid=".screentitle" allowresize="true">
+    <actions>
+      <action name="savesettings" onexecute="dosavesettings" />
+    </actions>
+
+    <menus>
+      <menu name="menubar">
+      </menu>
+    </menus>
+
+    <toolbar name="toolbar">
+      <!--
+      <button title="Statistieken" action="statistics" icon="tollium:reporting/statistics" />
+    -->
+    </toolbar>
+
+    <body>
+      <split type="horizontal">
+        <part width="1pr">
+          <box title="Settings">
+            <textedit name="baseurl" width="1pr" validationchecks="url" onchange="dogeneratecode" title="Base URL" />
+            <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
+            <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library name" />
+            <line layout="right">
+              <button action="savesettings" title="Save in registry" />
+            </line>
+          </box>
+          <box height="1pr" title="Members">
+            <arrayedit name="members"
+                       height="1pr"
+                       roweditscreen=".editmember"
+                       onchange="dogeneratecode"
+                       orderable="true"
+                       >
+              <column type="text" name="title" title="Title" />
+            </arrayedit>
+          </box>
+        </part>
+        <part width="2pr">
+          <tabs height="1pr">
+            <tab title="Site profile (.siteprl)">
+              <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
+            </tab>
+            <tab title="Library (.whlib)">
+              <codeedit name="libcode" width="1pr" height="1pr" enabled="false" />
+            </tab>
+            <tab title="Template (.witty)">
+              <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
+            </tab>
+          </tabs>
+        </part>
+      </split>
+    </body>
+  </screen>
+
+  <screen title="Edit member" name="editmember" implementation="rowedit" minwidth="400px">
+    <compositions>
+      <record name="row" />
+    </compositions>
+    <body>
+      <box title="Settings">
+        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" required="true" />
+        <select composition="row" cellname="type" type="pulldown" name="type" title="Type">
+          <!-- <option rowkey="array" title="Array" /> -->
+          <option rowkey="boolean" title="Boolean" />
+          <option rowkey="image" title="Image" />
+          <option rowkey="richdocument" title="Rich document (RTE)" />
+          <option rowkey="string" title="String" />
+          <option rowkey="whfsref" title="WHFS reference (file or folder)" />
+        </select>
+        <line layout="left">
+          <checkbox composition="row" cellname="required" title="" label="This is a required field" />
+        </line>
+      </box>
+      <defaultformbuttons buttons="ok cancel" />
+    </body>
+  </screen>
+
+</screens>

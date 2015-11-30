@@ -1,0 +1,122 @@
+<?wh
+LOADLIB "module::system/configure.whlib";
+LOADLIB "module::tollium/screenbase.whlib";
+LOADLIB "relative::../siteprofiles.whlib";
+
+PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
+<
+  MACRO Init(RECORD data)
+  {
+    /* +NAME: 'bedankt'
+       +TITLE: 'bedankt'
+       +FILETYPES: RECORD ARRAY
+        +NAME: 'bedankt'
+        +TITLE: 'bedankt'
+       +FOLDERTYPES: RECORD ARRAY
+        +NAME: 'bedankt'
+        +TITLE: 'bedankt'
+       +MEMBERS: RECORD ARRAY
+        +COMMENTS: '' // so far: Craft specific
+        +NAME: 'INLEIDING'
+        +REQUIRED: FALSE
+        +TITLE: 'Inleiding'
+        +TYPE: 'string'
+        +MEMBERS: RECORD ARRAY[0] // for arrayedit types
+        +OPTIONS: RECORD ARRAY[0] // so far: Craft specific
+        +SETTINGS: DEFAULT RECORD // so far: Craft specific
+    */
+    RECORD prefillsettings := DecodeHSON(GetRegistryKey(-1, "codegenerator.siteprofiles.settings", ""));
+
+    IF (RecordExists(prefillsettings))
+    {
+      this->baseurl->value := prefillsettings.baseurl;
+      this->itemtitle->value := prefillsettings.itemtitle;
+      this->lib->value := prefillsettings.lib;
+    }
+    ELSE
+    {
+      this->baseurl->value := "http://www.example.com/";
+      this->itemtitle->value := "Project";
+      this->lib->value := "example.whlib";
+    }
+
+    IF ("debug" IN data.params)
+    {
+      this->members->value := [[ title := "A text", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "An image", type := "image", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A boolean", type := "boolean", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A richdocument", type := "richdocument", required := FALSE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A whfsref", type := "whfsref", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "An array"
+                               , type := "array"
+                               , required := FALSE
+                               , members := [[ title := "A text", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]]
+                               ]
+                              ];
+    }
+  }
+
+  MACRO DoGenerateCode()
+  {
+    // add some columns that were specific to Craft import, no idea if we'll need this in generaal functions
+    RECORD ARRAY members := SELECT *
+                                 , name := GetSiteProfileXMLName(title)
+                                 , comments := ""
+                                 , options := DEFAULT RECORD ARRAY
+                                 , settings := [ types := DEFAULT RECORD ARRAY ]
+                                 , members := DEFAULT RECORD ARRAY
+                              FROM this->members->value AS mainmembers;
+
+    FOREVERY (RECORD siteprofmember FROM members)
+    {
+      IF (siteprofmember.type = "array")
+      {
+        members[#siteprofmember].members := SELECT *
+                                                 , name := GetSiteProfileXMLName(title)
+                                                 , comments := ""
+                                                 , options := DEFAULT RECORD ARRAY
+                                              FROM siteprofmember.members;
+      }
+    }
+
+    RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
+                   , title := this->itemtitle->value
+                   , filetypes := [[ title := this->itemtitle->value ]]
+                   , foldertypes := [[ title := this->itemtitle->value ]]
+                   , members := members
+                   , lib := this->lib->value
+                   ];
+
+    this->GenerateSiteProfileCode(data);
+    this->GenerateLibCode(data);
+    this->GenerateWittyCode(data);
+  }
+
+  MACRO GenerateSiteProfileCode(RECORD data)
+  {
+    this->siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
+  }
+
+  MACRO GenerateLibCode(RECORD data)
+  {
+    this->libcode->value := GenerateSiteProfileLibrary(this->baseurl->value, data);
+  }
+
+  MACRO GenerateWittyCode(RECORD data)
+  {
+    this->wittycode->value := GenerateSiteProfileWitty(data);
+  }
+
+  MACRO DoSaveSettings()
+  {
+    // save settings as HSON
+    RECORD settings := [ baseurl := this->baseurl->value
+                       , itemtitle := this->itemtitle->value
+                       , lib := this->lib->value
+                       ];
+
+    OBJECT work := this->BeginWork();
+    SetRegistryKey(-1, "codegenerator.siteprofiles.settings", EncodeHSON(settings));
+    work->Finish();
+  }
+>;
