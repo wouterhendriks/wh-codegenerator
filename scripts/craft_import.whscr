@@ -9,9 +9,10 @@ LOADLIB "module::system/database.whlib";
 LOADLIB "module::system/whfs.whlib";
 LOADLIB "module::codegenerator/siteprofiles.whlib";
 
-STRING jsonpath := "moduledata::codegenerator/sections_maple.json"; // path to JSON source file
-STRING baseurl := "http://www.themaple.nl/"; // used in XML namespaces
-STRING sitename := "The Maple"; // used for the 'addfsobjects' option
+STRING jsonpath := "moduledata::codegenerator/sections_wst_hellendoorn.json"; // path to JSON source file
+STRING baseurl := "http://www.wst-hellendoorn.nl/"; // used in XML namespaces
+STRING sitename := "WST Hellendoorn"; // used for the 'addfsobjects' option
+STRING lib := "wst_hellendoorn.whlib";
 STRING lang := "nl"; // "nl", "en"
 
 RECORD args := ParseArguments(GetConsoleArguments(),
@@ -51,7 +52,7 @@ IF (args.siteprl)
 
   FOREVERY (RECORD section FROM siteprofilesections)
   {
-    siteprofxml := siteprofxml || GenerateSiteprofileData(baseurl, section);
+    siteprofxml := siteprofxml || GenerateSiteprofile(baseurl, section);
   }
 
   siteprofxml := siteprofxml || "</siteprofile>\n";
@@ -61,15 +62,19 @@ IF (args.siteprl)
 
 IF (args.addfsobjects)
 {
+  OBJECT trans := OpenPrimary();
+  trans->BeginWork();
+
   FOREVERY (RECORD section FROM siteprofilesections)
     AddFilesAndFolders(section);
+
+  RECORD ARRAY errors := trans->CommitWork();
+  IF (Length(errors) > 0)
+    Abort("There were errors in AddFilesAndFolders: " || AnyToString(errors,'tree'));
 }
 
 PUBLIC MACRO AddFilesAndFolders(RECORD section)
 {
-  OBJECT trans := OpenPrimary();
-  trans->BeginWork();
-
   OBJECT site := OpenSiteByName(sitename);
   OBJECT root := site->OpenByPath("");
 
@@ -77,7 +82,7 @@ PUBLIC MACRO AddFilesAndFolders(RECORD section)
   {
     FOREVERY (RECORD foldertype FROM section.foldertypes)
     {
-      STRING xmlns := siteprofileinfo.baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(section.name);
+      STRING xmlns := siteprofileinfo.baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(section.name) || "s";
       OBJECT whfstype := OpenWHFSType(xmlns);
       IF (NOT ObjectExists(whfstype))
         Abort("Could not locate site profile folder type '" || xmlns || "'");
@@ -114,10 +119,6 @@ PUBLIC MACRO AddFilesAndFolders(RECORD section)
       root->CreateFile(newfile);
     }
   }
-
-  RECORD ARRAY errors := trans->CommitWork();
-  IF (Length(errors) > 0)
-    Abort("There were errors in AddFilesAndFolders: " || AnyToString(errors,'tree'));
 }
 
 //********************************************************************************
@@ -194,7 +195,7 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
                , filetypes := filetypes
                , foldertypes := foldertypes
                , members := members
-               //, applies := DEFAULT RECORD ARRAY
+               , lib := lib
                ] INTO siteprofilesections AT END;
     }
 
@@ -248,6 +249,9 @@ RECORD ARRAY FUNCTION GetCraftFieldsByEntryTypes(RECORD ARRAY entrytypes, RECORD
 
         FOREVERY (RECORD tab FROM tabs)
         {
+          IF (TypeID(tab.value) = TypeID(VARIANT ARRAY))
+            CONTINUE;
+
             RECORD ARRAY fields := UnpackRecord(tab.value);
             FOREVERY (RECORD field FROM fields)
             {
@@ -379,6 +383,33 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
             CASE "LIGHTSWITCH"
             {
                 curmember.type := "boolean";
+            }
+            CASE "NUMBER"
+            {
+                curmember.type := "string";
+                curmember.settings := [ specialtype := "integer" ];
+            }
+            CASE "DATE"
+            {
+              IF (TypeID(field.settings.showtime) = TypeID(STRING) OR field.settings.showtime = 0)//date
+              {
+                curmember.type := "date";
+                curmember.settings := [ datetype := "date" ];
+              }
+              ELSE IF (field.settings.showtime = 1) //  date/time
+              {
+                curmember.type := "datetime";
+                curmember.settings := [ datetype := "datetime" ];
+              }
+              ELSE
+              {
+                Abort("Unknown date type: " || field.settings.showtime);
+              }
+            }
+            CASE "TABLE", "CATEGORIES" // no idea what to do with these
+            {
+              curmember.type := field.type;
+              curmember.comments := "No idea what to do with: " || field.type;
             }
             DEFAULT
             {

@@ -26,13 +26,13 @@
 
     <body>
       <split type="horizontal">
-        <part width="1pr">
+        <part width="1pr" marginright="5px">
           <box title="Settings">
             <textedit name="baseurl" width="1pr" validationchecks="url" onchange="dogeneratecode" title="Base URL" />
             <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
             <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library name" />
-            <line layout="right">
-              <button action="savesettings" title="Save in registry" />
+            <line layout="left">
+              <checkbox name="use_rtd" title="" label="Use an RTD as the main file type" onchange="dogeneratecode" value="true" />
             </line>
           </box>
           <box height="1pr" title="Members">
@@ -43,19 +43,31 @@
                        orderable="true"
                        >
               <column type="text" name="title" title="Title" />
+              <column type="text" name="name" title="Name" />
             </arrayedit>
           </box>
+          <line layout="center">
+            <button action="savesettings" title="Save these settings in registry" />
+          </line>
         </part>
         <part width="2pr">
           <tabs height="1pr">
-            <tab title="Site profile (.siteprl)">
-              <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
+            <tab title="Object scaffolding">
+              <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
+              <tabs height="1pr">
+                <tab title="Site profile (.siteprl)">
+                  <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+                <tab title="Library (.whlib)">
+                  <codeedit name="libcode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+                <tab title="Template (.witty)">
+                  <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+              </tabs>
             </tab>
-            <tab title="Library (.whlib)">
-              <codeedit name="libcode" width="1pr" height="1pr" enabled="false" />
-            </tab>
-            <tab title="Template (.witty)">
-              <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
+            <tab title="Screen only">
+              <codeedit name="screen_siteprlcode" width="1pr" height="1pr" enabled="false" />
             </tab>
           </tabs>
         </part>
@@ -63,13 +75,14 @@
     </body>
   </screen>
 
-  <screen title="Edit member" name="editmember" implementation="rowedit" minwidth="400px">
+  <screen title="Edit member" name="editmember" minwidth="400px">
     <compositions>
       <record name="row" />
     </compositions>
     <body>
       <box title="Settings">
         <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" required="true" />
+        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" />
         <select composition="row" cellname="type" type="pulldown" name="type" title="Type">
           <!-- <option rowkey="array" title="Array" /> -->
           <option rowkey="boolean" title="Boolean" />

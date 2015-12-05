@@ -238,38 +238,44 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
     {
         CASE "string"
         {
-            IF (RecordExists(siteprofmember.settings) AND CellExists(siteprofmember.settings, "specialtype") AND siteprofmember.settings.specialtype != "")
-            {
-                IF (siteprofmember.settings.specialtype = "color")
-                {
-                    /*
-                    // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
-                    // https://gitlab.b-lex.com/webhare/webhare/issues/335
-                    xml := xml || '      '
-                        || '<coloredit composition="fsinstance" '
-                        || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                        || 'title="' || siteprofmember.title || '" '
-                        || (siteprofmember.required ? 'required="true" ' : '')
-                        || '/>';
-                    */
-                    xml := xml
-                        || '        <line>\n'
-                        || '          <textedit composition="fsinstance" '
-                        || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                        || 'title="' || siteprofmember.title || '" '
-                        || (siteprofmember.required ? 'required="true" ' : '')
-                        || 'width="10x" '
-                        || '/>\n'
-                        || '          <text title="" value="(#cc00ff)" />\n'
-                        || '        </line>';
-                }
+          STRING specialtype;
+          IF (RecordExists(siteprofmember.settings) AND CellExists(siteprofmember.settings, "specialtype"))
+            specialtype := siteprofmember.settings.specialtype;
+
+          IF (specialtype = "color")
+          {
+              /*
+              // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
+              // https://gitlab.b-lex.com/webhare/webhare/issues/335
+              xml := xml || '      '
+                  || '<coloredit composition="fsinstance" '
+                  || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                  || 'title="' || siteprofmember.title || '" '
+                  || (siteprofmember.required ? 'required="true" ' : '')
+                  || '/>';
+              */
+              xml := xml
+                  || '        <line>\n'
+                  || '          <textedit composition="fsinstance" '
+                  || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+                  || 'title="' || siteprofmember.title || '" '
+                  || (siteprofmember.required ? 'required="true" ' : '')
+                  || 'width="10x" '
+                  || '/>\n'
+                  || '          <text title="" value="(#cc00ff)" />\n'
+                  || '        </line>';
             }
             ELSE
             {
                 xml := xml || '        '
                     || '<textedit composition="fsinstance" '
                     || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                    || 'title="' || siteprofmember.title || '" '
+                    || 'title="' || siteprofmember.title || '" ';
+
+                IF (specialtype = "integer")
+                  xml := xml || 'valuetype="integer" ';
+
+                xml := xml
                     || (siteprofmember.required ? 'required="true" ' : '')
                     || 'width="1pr" '
                     || '/>';
@@ -359,9 +365,25 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                 || '/>\n'
                 || '        </line>';
         }
+        CASE "datetime"
+        {
+          xml := xml || '        '
+              || '<datetime composition="fsinstance" '
+              || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+              || 'title="' || siteprofmember.title || '" ';
+
+          IF (siteprofmember.settings.datetype = "date")
+            xml := xml || 'type="date" ';
+          ELSE IF (siteprofmember.settings.datetype = "datetime")
+            xml := xml || 'type="datetime" ';
+
+          xml := xml
+              || (siteprofmember.required ? 'required="true" ' : '')
+              || '/>';
+        }
         DEFAULT
         {
-            IF (siteprofmember.type NOT IN ["FIXME"]) abort(siteprofmember.type);
+            IF (ToUpperCase(siteprofmember.type) NOT IN ["FIXME","TABLE","CATEGORIES"]) abort(siteprofmember.type); // remove this when certain we support all fields
             xml := xml || '      <!-- ' || siteprofmember.comments || ' -->';
         }
     }
@@ -371,41 +393,75 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
 
 STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 {
+  IF (CellExists(siteprofilesection, "screen_only") AND siteprofilesection.screen_only = TRUE)
+    RETURN "";
+
   STRING xml;
 
-  FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
+  IF (CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE)
   {
-    STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
-    STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+    FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
+    {
+      STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
+      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
 
-    xml := xml
-        || '  <!-- Only allow the custom file type in this folder -->\n'
-        || '  <apply>\n'
-        || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
-        || '    <denyfiletype typedef="*" />\n'
-        || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
-        || '  </apply>\n\n'
+      xml := xml
+          || '  <!-- Only allow the RTD file type in this folder, and run the template -->\n'
+          || '  <apply>\n'
+          || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
+          || '\n'
+          || '    <denyfiletype typedef="*" />\n'
+          || '    <allowfiletype typedef="http://www.webhare.net/xmlns/publisher/richdocumentfile" />\n'
+          || '\n'
+          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
+          || '  </apply>\n\n'
 
-        || '  <!-- Extend the interface for non-index files -->\n'
-        || '  <apply>\n'
-        || '    <and>\n'
-        || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
-        || '      <to type="file" parenttype="' || xmlns_folder || '" />\n'
-        || '    </and>\n'
-        || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
-        || '  </apply>\n\n';
+          || '  <!-- Extend the interface for non-index files -->\n'
+          || '  <apply>\n'
+          || '    <and>\n'
+          || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
+          || '      <to type="file" parenttype="' || xmlns_folder || '" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" />\n'
+          || '    </and>\n'
+          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+          || '  </apply>\n\n';
+    }
   }
-
-  FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
+  ELSE
   {
-    STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(filetype.title);
+    FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
+    {
+      STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
+      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
 
-    xml := xml
-        || '  <!-- Run the template for our custom file type -->\n'
-        || '  <apply>\n'
-        || '    <to type="file" filetype="' || xmlns_file || '" />\n'
-        || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(filetype.title) || 'spage" />\n'
-        || '  </apply>';
+      xml := xml
+          || '  <!-- Only allow the custom file type in this folder -->\n'
+          || '  <apply>\n'
+          || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
+          || '    <denyfiletype typedef="*" />\n'
+          || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
+          || '  </apply>\n\n'
+
+          || '  <!-- Extend the interface for non-index files -->\n'
+          || '  <apply>\n'
+          || '    <and>\n'
+          || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
+          || '      <to type="file" parenttype="' || xmlns_folder || '" />\n'
+          || '    </and>\n'
+          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+          || '  </apply>\n\n';
+    }
+
+    FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
+    {
+      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(filetype.title);
+
+      xml := xml
+          || '  <!-- Run the template for our custom file type -->\n'
+          || '  <apply>\n'
+          || '    <to type="file" filetype="' || xmlns_file || '" />\n'
+          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(filetype.title) || 'spage" />\n'
+          || '  </apply>';
+    }
   }
 
   RETURN xml;
@@ -418,57 +474,111 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   STRING name_plural := name || "s";
   STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
 
-  STRING o := '  PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
-           || '  <\n'
-           || '    RECORD wittydata;\n'
-           || '    BOOLEAN isindex;\n'
+  BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+
+  STRING o;
+
+  IF (filetype_is_rtd)
+    o := o || 'LOADLIB "wh::xml/dom.whlib";\n';
+
+  o := o || 'LOADLIB "wh::witty.whlib";\n';
+
+  IF (filetype_is_rtd)
+    o := o || 'LOADLIB "module::publisher/internal/renderers/rtd.whlib";\n';
+
+  o := o || 'LOADLIB "module::publisher/webdesign.whlib";\n'
+         || 'LOADLIB "module::system/database.whlib";\n'
+         || 'LOADLIB "module::system/whfs.whlib";\n'
+         || '\n'
+         || 'PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
+         || '<\n'
+         || '  RECORD wittydata;\n'
+         || '  BOOLEAN isindex;\n'
+         || '\n'
+         || '  UPDATE PUBLIC MACRO PrepareForRendering(OBJECT webdesign)\n'
+         || '  {\n'
+         || '    this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
+         || '\n'
+         || '     IF (this->isindex)\n'
+         || '       this->PrepareForIndex(webdesign);\n'
+         || '     ELSE\n'
+         || '       this->PrepareForDetails(webdesign);\n'
+         || '  }\n'
+         || '\n'
+         || '  MACRO PrepareForIndex(OBJECT webdesign)\n'
+         || '  {\n'
+         || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n';
+
+  IF (filetype_is_rtd)
+    o := o || '    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");\n';
+
+  o := o || '\n'
+         || '    // collect ' || name_plural || '\n'
+         || '    RECORD ARRAY ' || name_plural || ' := \n'
+         || '           SELECT id\n'
+         || '                , title\n'
+         || '                , link := url\n';
+  IF (filetype_is_rtd)
+    o := o || '                , contents := ""\n';
+
+  o := o || '             FROM system.fs_objects\n'
+         || '            WHERE parent = webdesign->targetfolder->id\n'
+         || '                  AND type = ' || name || 'type->id\n'
+         || '                  AND title != ""\n'
+         || '                  AND indexurl != ""\n'
+         || '         ORDER BY ordering, ToUpperCase(title), id;\n'
+         || '\n'
+         || '    ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n'
+         || '\n';
+
+  IF (filetype_is_rtd)
+  {
+    o := o || '    // add RTD contents\n'
+           || '    ' || name_plural || ' := rtdtype->EnrichWithBulkData(' || name_plural || ', [ "data" ]);\n'
            || '\n'
-           || '    UPDATE PUBLIC MACRO PrepareForRendering(OBJECT webdesign)\n'
+           || '    // generate a plain text version of the RTD for the overview\n'
+           || '    FOREVERY (RECORD ' || name || ' FROM ' || name_plural || ')\n'
            || '    {\n'
-           || '      this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
-           || '\n'
-           || '       IF (this->isindex)\n'
-           || '         this->PrepareForIndex(webdesign);\n'
-           || '       ELSE\n'
-           || '         this->PrepareForDetails(webdesign);\n'
+           || '      IF (RecordExists(' || name || '.data))\n'
+           || '      {\n'
+           || '        OBJECT doc := MakeXMLDocumentFromHTML(' || name || '.data.htmltext);\n'
+           || '        ' || name_plural || '[#' || name || '].contents := doc->body->textcontent;\n'
+           || '      }\n'
            || '    }\n'
-           || '\n'
-           || '    MACRO PrepareForIndex(OBJECT webdesign)\n'
-           || '    {\n'
-           || '      OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
-           || '\n'
-           || '      // collect ' || name_plural || '\n'
-           || '      RECORD ARRAY ' || name_plural || ' := \n'
-           || '             SELECT id\n'
-           || '                  , title\n'
-           || '                  , link := url\n'
-           || '               FROM system.fs_objects\n'
-           || '              WHERE parent = webdesign->targetfolder->id\n'
-           || '                    AND type = ' || name || 'type->id\n'
-           || '                    AND title != ""\n'
-           || '                    AND indexurl != ""\n'
-           || '           ORDER BY ordering, ToUpperCase(title), id;\n'
-           || '\n'
-           || '      ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n'
-           || '\n'
-           || '      this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n'
-           || '                         ];\n'
-           || '    }\n'
-           || '\n'
-           || '    MACRO PrepareForDetails(OBJECT webdesign)\n'
-           || '    {\n'
-           || '      OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
-           || '\n'
-           || '      RECORD ' || name || 'data := ' || name || 'type->GetInstanceData(webdesign->targetobject->id);\n'
-           || '\n'
-           || '      this->wittydata := [ ' || name || 'data := ' || name || 'data ];\n'
-           || '    }\n'
-           || '\n'
-           || '    UPDATE PUBLIC MACRO RunBody(OBJECT webdesign)\n'
-           || '    {\n'
-           || '      EmbedWittyComponent(this->isindex ? "' || name_plural || 'index" : "' || name || 'details", this->wittydata);\n'
-           || '    }\n'
-           || '  >;\n';
+           || '\n';
+  }
+
+  o := o || '    this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n'
+         || '                       ];\n'
+         || '  }\n'
+         || '\n'
+         || '  MACRO PrepareForDetails(OBJECT webdesign)\n'
+         || '  {\n'
+         || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
+         || '\n'
+         || '    RECORD ' || name || 'data := ' || name || 'type->GetInstanceData(webdesign->targetobject->id);\n'
+         || '\n';
+
+  IF (filetype_is_rtd)
+  {
+    o := o || '    OBJECT rtd := NEW RenderRTD(webdesign->targetobject);\n'
+           || '    rtd->PrepareForRendering(webdesign);\n'
+           || '\n';
+  }
+
+  o := o || '    this->wittydata := [ ' || name || 'data := ' || name || 'data\n';
+
+  IF (filetype_is_rtd)
+    o := o || '                       , body := PTR rtd->RunBody(webdesign)\n';
+
+  o := o || '                       ];\n'
+         || '  }\n'
+         || '\n'
+         || '  UPDATE PUBLIC MACRO RunBody(OBJECT webdesign)\n'
+         || '  {\n'
+         || '    EmbedWittyComponent(this->isindex ? "' || name_plural || 'index" : "' || name || 'details", this->wittydata);\n'
+         || '  }\n'
+         || '>;\n';
 
   RETURN o;
 }
@@ -480,19 +590,32 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   STRING name_plural := name || "s";
   STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
 
-  STRING o := '[component ' || name_plural || 'index]\n'
+  BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+
+  STRING o;
+
+  IF (NOT filetype_is_rtd)
+  {
+    o := o || '[component ' || name_plural || 'index]\n'
            || '  [forevery ' || name_plural || ']\n';
 
-  // FIXME: Print stuff based on member type
-  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
-  {
-    o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
+    // FIXME: Print stuff based on member type
+    FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+    {
+      o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
+    }
+
+    o := o || '  [/forevery]\n'
+           || '[/component]\n'
+           || '\n';
   }
 
-  o := o || '  [/forevery]\n'
-         || '[/component]\n'
-         || '\n'
-         || '[component ' || name || 'details]\n';
+  o := o || '[component ' || name || 'details]\n';
+
+  IF (filetype_is_rtd)
+  {
+    o := o || '  RTD body: [body]\n\n';
+  }
 
   FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
   {

@@ -33,35 +33,74 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->baseurl->value := prefillsettings.baseurl;
       this->itemtitle->value := prefillsettings.itemtitle;
       this->lib->value := prefillsettings.lib;
+      this->members->value := SELECT * FROM prefillsettings.members;
+      this->use_rtd->value := prefillsettings.use_rtd;
     }
-    ELSE
-    {
-      this->baseurl->value := "http://www.example.com/";
-      this->itemtitle->value := "Project";
-      this->lib->value := "example.whlib";
-    }
+
+    this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
 
     IF ("debug" IN data.params)
     {
-      this->members->value := [[ title := "A text", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]
-                              ,[ title := "An image", type := "image", required := TRUE, members := DEFAULT RECORD ARRAY ]
-                              ,[ title := "A boolean", type := "boolean", required := TRUE, members := DEFAULT RECORD ARRAY ]
-                              ,[ title := "A richdocument", type := "richdocument", required := FALSE, members := DEFAULT RECORD ARRAY ]
-                              ,[ title := "A whfsref", type := "whfsref", required := TRUE, members := DEFAULT RECORD ARRAY ]
+      this->members->value := [[ title := "A text", name := "", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "An image", name := "", type := "image", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A boolean", name := "", type := "boolean", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A richdocument", name := "", type := "richdocument", required := FALSE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A whfsref", name := "", type := "whfsref", required := TRUE, members := DEFAULT RECORD ARRAY ]
                               ,[ title := "An array"
+                               , name := ""
                                , type := "array"
                                , required := FALSE
-                               , members := [[ title := "A text", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]]
+                               , members := [[ title := "A text", name := "", type := "string", required := FALSE, members := DEFAULT RECORD ARRAY ]]
                                ]
                               ];
     }
+
+    //this->DoOpenMembersEditDialog(DEFAULT RECORD);
+  }
+
+  RECORD FUNCTION DoOpenMembersEditDialog(RECORD row)
+  {
+    OBJECT dialog := this->LoadScreen(".editmember"
+                                    , [ row := row
+                                      ]);
+
+/*
+    IF (RecordExists(row))
+    {
+      // Edit an existing answer
+      dialog := this->LoadScreen( ".mcanswer"
+                               , [ row := row
+                                 , surveyid := this->surveyid
+                                 , groupid := this->groupid
+                                 , answerid := row.id
+                                 , mctype := this->GetMultipleChoiceType()
+                                 ]
+                               );
+    }
+    ELSE
+    {
+      // Add an answer
+      dialog := this->LoadScreen( ".mcanswer"
+                                 , [ row := DEFAULT RECORD
+                                   , surveyid := this->surveyid
+                                   , groupid := this->groupid
+                                   , answerid := 0
+                                   , mctype := this->GetMultipleChoiceType()
+                                   ]
+                                 );
+    }
+*/
+    IF (dialog->RunModal() = "ok")
+      RETURN dialog->result;
+
+    RETURN DEFAULT RECORD;
   }
 
   MACRO DoGenerateCode()
   {
     // add some columns that were specific to Craft import, no idea if we'll need this in generaal functions
     RECORD ARRAY members := SELECT *
-                                 , name := GetSiteProfileXMLName(title)
+                                 , name := (name != "" ? name : GetSiteProfileXMLName(title))
                                  , comments := ""
                                  , options := DEFAULT RECORD ARRAY
                                  , settings := [ types := DEFAULT RECORD ARRAY ]
@@ -73,24 +112,39 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       IF (siteprofmember.type = "array")
       {
         members[#siteprofmember].members := SELECT *
-                                                 , name := GetSiteProfileXMLName(title)
+                                                 , name := (name != "" ? name : GetSiteProfileXMLName(title))
                                                  , comments := ""
                                                  , options := DEFAULT RECORD ARRAY
                                               FROM siteprofmember.members;
       }
+      ELSE IF (siteprofmember.type = "image")
+      {
+        members[#siteprofmember].comments := "Image";
+      }
     }
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
-                   , title := this->itemtitle->value
+                   , title := Substitute(this->itemtitle->value, " ", "")
                    , filetypes := [[ title := this->itemtitle->value ]]
                    , foldertypes := [[ title := this->itemtitle->value ]]
                    , members := members
                    , lib := this->lib->value
+                   , screen_only := FALSE
                    ];
+
+    IF (this->use_rtd->value = TRUE)
+    {
+      //data.foldertypes := DEFAULT RECORD ARRAY;
+      data.filetypes := DEFAULT RECORD ARRAY;
+
+      INSERT CELL filetype_is_rtd := TRUE INTO data;
+    }
 
     this->GenerateSiteProfileCode(data);
     this->GenerateLibCode(data);
     this->GenerateWittyCode(data);
+
+    this->GenerateScreenOnlyCode(data);
   }
 
   MACRO GenerateSiteProfileCode(RECORD data)
@@ -108,12 +162,23 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     this->wittycode->value := GenerateSiteProfileWitty(data);
   }
 
+  MACRO GenerateScreenOnlyCode(RECORD data)
+  {
+    data.filetypes := DEFAULT RECORD ARRAY;
+    data.foldertypes := DEFAULT RECORD ARRAY;
+    data.screen_only := TRUE;
+
+    this->screen_siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
+  }
+
   MACRO DoSaveSettings()
   {
     // save settings as HSON
     RECORD settings := [ baseurl := this->baseurl->value
                        , itemtitle := this->itemtitle->value
                        , lib := this->lib->value
+                       , members := this->members->value
+                       , use_rtd := this->use_rtd->value
                        ];
 
     OBJECT work := this->BeginWork();
@@ -121,3 +186,25 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     work->Finish();
   }
 >;
+
+PUBLIC OBJECTTYPE EditMember EXTEND TolliumScreenBase
+<
+  PUBLIC RECORD result;
+
+  MACRO Init(RECORD data)
+  {
+    this->row->value := data.row;
+  }
+
+  BOOLEAN FUNCTION Submit()
+  {
+    OBJECT work := this->BeginWork();
+
+    this->result := this->row->value;
+
+    RETURN work->Finish();
+  }
+
+
+>;
+
