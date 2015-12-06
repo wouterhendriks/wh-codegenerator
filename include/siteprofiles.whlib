@@ -580,7 +580,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
 
   FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
   {
-    o := o || '  ' || siteprofmember.title || ': [projectdata.' || siteprofmember.name || ']<br />\n';
+    o := o || '  ' || siteprofmember.title || ': [' || name || 'data.' || siteprofmember.name || ']<br />\n';
   }
 
   o := o || '[/component]\n';
