@@ -398,56 +398,31 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
   STRING xml;
 
-  IF (CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE)
+  BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+
+  STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+
+  IF (filetype_is_rtd)
+    xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
+
+  FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
   {
-    FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
-    {
-      STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
-      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+    STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
 
-      xml := xml
-          || '  <!-- Only allow the RTD file type in this folder, and run the template -->\n'
-          || '  <apply>\n'
-          || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
-          || '\n'
-          || '    <denyfiletype typedef="*" />\n'
-          || '    <allowfiletype typedef="http://www.webhare.net/xmlns/publisher/richdocumentfile" />\n'
-          || '\n'
-          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
-          || '  </apply>\n\n'
+    xml := xml
+        || '  <!-- Only allow the ' || (filetype_is_rtd ? "RTD" : "custom") || ' file type in this folder, and run the template -->\n'
+        || '  <apply>\n'
+        || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
+        || '    <denyfiletype typedef="*" />\n'
+        || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
+        || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
+        || '  </apply>\n\n'
 
-          || '  <!-- Extend the interface for non-index files -->\n'
-          || '  <apply>\n'
-          || '    <and>\n'
-          || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
-          || '      <to type="file" parenttype="' || xmlns_folder || '" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" />\n'
-          || '    </and>\n'
-          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
-          || '  </apply>\n\n';
-    }
-  }
-  ELSE
-  {
-    FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
-    {
-      STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
-      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
-
-      xml := xml
-          || '  <!-- Only allow the custom file type in this folder, and run the template -->\n'
-          || '  <apply>\n'
-          || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
-          || '    <denyfiletype typedef="*" />\n'
-          || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
-          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
-          || '  </apply>\n\n'
-
-          || '  <!-- Extend the interface for our special file type (skipping the index) -->\n'
-          || '  <apply>\n'
-          || '    <to type="file" filetype="' || xmlns_file || '" />\n'
-          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
-          || '  </apply>\n\n';
-    }
+        || '  <!-- Extend the interface for non-index files -->\n'
+        || '  <apply>\n'
+        || '    <to type="file" filetype="' || xmlns_file || '" parenttype="' || xmlns_folder || '" />\n'
+        || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+        || '  </apply>\n\n';
   }
 
   RETURN xml;
@@ -504,12 +479,13 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '           SELECT id\n'
          || '                , title\n'
          || '                , link := url\n';
+
   IF (filetype_is_rtd)
-    o := o || '                , contents := ""\n';
+    o := o || '                , intro := ""\n';
 
   o := o || '             FROM system.fs_objects\n'
          || '            WHERE parent = webdesign->targetfolder->id\n'
-         || '                  AND type = ' || name || 'type->id\n'
+         || '                  AND type = ' || (filetype_is_rtd ? 'rtd' : name) || 'type->id\n'
          || '                  AND title != ""\n'
          || '                  AND indexurl != ""\n'
          || '         ORDER BY ordering, ToUpperCase(title), id;\n'
@@ -528,7 +504,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
            || '      IF (RecordExists(' || name || '.data))\n'
            || '      {\n'
            || '        OBJECT doc := MakeXMLDocumentFromHTML(' || name || '.data.htmltext);\n'
-           || '        ' || name_plural || '[#' || name || '].contents := doc->body->textcontent;\n'
+           || '        ' || name_plural || '[#' || name || '].intro := doc->body->textcontent;\n'
            || '      }\n'
            || '    }\n'
            || '\n';
@@ -576,34 +552,35 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING o;
-
-  IF (NOT filetype_is_rtd)
-  {
-    o := o || '[component ' || name_plural || 'index]\n'
+  STRING o := '[component ' || name_plural || 'index]\n'
            || '  [forevery ' || name_plural || ']\n';
 
-    // FIXME: Print stuff based on member type
-    FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
-    {
-      o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
-    }
-
-    o := o || '  [/forevery]\n'
-           || '[/component]\n'
-           || '\n';
+  IF (filetype_is_rtd)
+  {
+    o := o || '    Intro: [intro]<br />\n';
   }
+
+  // FIXME: Print stuff based on member type
+  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+  {
+    o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']<br />\n'
+           || '    <hr />\n';
+  }
+
+  o := o || '  [/forevery]\n'
+         || '[/component]\n'
+         || '\n';
 
   o := o || '[component ' || name || 'details]\n';
 
   IF (filetype_is_rtd)
   {
-    o := o || '  RTD body: [body]\n\n';
+    o := o || '  RTD body: [body]<br />\n';
   }
 
   FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
   {
-    o := o || '  ' || siteprofmember.title || ': [' || siteprofmember.name || ']\n';
+    o := o || '  ' || siteprofmember.title || ': [projectdata.' || siteprofmember.name || ']<br />\n';
   }
 
   o := o || '[/component]\n';
