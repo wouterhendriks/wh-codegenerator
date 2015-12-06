@@ -35,6 +35,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->lib->value := prefillsettings.lib;
       this->members->value := SELECT * FROM prefillsettings.members;
       this->use_rtd->value := prefillsettings.use_rtd;
+
+      this->DoGenerateCode();
     }
 
     this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
@@ -64,32 +66,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                                     , [ row := row
                                       ]);
 
-/*
-    IF (RecordExists(row))
-    {
-      // Edit an existing answer
-      dialog := this->LoadScreen( ".mcanswer"
-                               , [ row := row
-                                 , surveyid := this->surveyid
-                                 , groupid := this->groupid
-                                 , answerid := row.id
-                                 , mctype := this->GetMultipleChoiceType()
-                                 ]
-                               );
-    }
-    ELSE
-    {
-      // Add an answer
-      dialog := this->LoadScreen( ".mcanswer"
-                                 , [ row := DEFAULT RECORD
-                                   , surveyid := this->surveyid
-                                   , groupid := this->groupid
-                                   , answerid := 0
-                                   , mctype := this->GetMultipleChoiceType()
-                                   ]
-                                 );
-    }
-*/
     IF (dialog->RunModal() = "ok")
       RETURN dialog->result;
 
@@ -98,7 +74,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
   MACRO DoGenerateCode()
   {
-    // add some columns that were specific to Craft import, no idea if we'll need this in generaal functions
+    // add some columns that were specific to Craft import, no idea if we'll need this in general functions
     RECORD ARRAY members := SELECT *
                                  , name := (name != "" ? name : GetSiteProfileXMLName(title))
                                  , comments := ""

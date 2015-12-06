@@ -434,33 +434,19 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
       STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
 
       xml := xml
-          || '  <!-- Only allow the custom file type in this folder -->\n'
+          || '  <!-- Only allow the custom file type in this folder, and run the template -->\n'
           || '  <apply>\n'
           || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
           || '    <denyfiletype typedef="*" />\n'
           || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
+          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
           || '  </apply>\n\n'
 
-          || '  <!-- Extend the interface for non-index files -->\n'
-          || '  <apply>\n'
-          || '    <and>\n'
-          || '      <not><to type="index" parenttype="' || xmlns_folder || '" /></not>\n'
-          || '      <to type="file" parenttype="' || xmlns_folder || '" />\n'
-          || '    </and>\n'
-          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
-          || '  </apply>\n\n';
-    }
-
-    FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
-    {
-      STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(filetype.title);
-
-      xml := xml
-          || '  <!-- Run the template for our custom file type -->\n'
+          || '  <!-- Extend the interface for our special file type (skipping the index) -->\n'
           || '  <apply>\n'
           || '    <to type="file" filetype="' || xmlns_file || '" />\n'
-          || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(filetype.title) || 'spage" />\n'
-          || '  </apply>';
+          || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+          || '  </apply>\n\n';
     }
   }
 
@@ -476,7 +462,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING o;
+  STRING o := '<?wh\n';
 
   IF (filetype_is_rtd)
     o := o || 'LOADLIB "wh::xml/dom.whlib";\n';
@@ -554,9 +540,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '\n'
          || '  MACRO PrepareForDetails(OBJECT webdesign)\n'
          || '  {\n'
-         || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n'
-         || '\n'
-         || '    RECORD ' || name || 'data := ' || name || 'type->GetInstanceData(webdesign->targetobject->id);\n'
+         || '    RECORD ' || name || 'data := webdesign->targetobject->GetInstanceData("' || baseurl || 'xmlns/filetype/' || name || '");\n'
          || '\n';
 
   IF (filetype_is_rtd)
