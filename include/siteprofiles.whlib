@@ -294,7 +294,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                 || (siteprofmember.required ? '             required="true"\n' : '')
                 || '             type="html-block">\n'
                 || '          <linkhandlers>\n'
-                || '            <p:internallinks name="internallinkhandler' || Substitute(siteprofmember.name, " ", "") || '" />\n'
+                || '            <p:internallinks />\n'
                 || '          </linkhandlers>\n'
                 || '        </rte>';
         }
