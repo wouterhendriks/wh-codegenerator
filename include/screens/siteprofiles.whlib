@@ -123,18 +123,41 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     this->GenerateScreenOnlyCode(data);
   }
 
+  RECORD FUNCTION ConvertToExpectedData(RECORD data)
+  {
+    FOREVERY (RECORD siteprofmember FROM data.members)
+    {
+      SWITCH (siteprofmember.type)
+      {
+        CASE "datetime"
+        {
+          siteprofmember.settings := CellInsert(siteprofmember.settings, "datetype", siteprofmember.type_dt_datetimetype);
+          siteprofmember.settings := CellInsert(siteprofmember.settings, "precision", siteprofmember.type_dt_precision);
+          siteprofmember.settings := CellInsert(siteprofmember.settings, "storeutc", siteprofmember.type_dt_storeutc);
+        }
+      }
+
+      data.members[#siteprofmember] := siteprofmember;
+    }
+
+    RETURN data;
+  }
+
   MACRO GenerateSiteProfileCode(RECORD data)
   {
+    data := this->ConvertToExpectedData(data);
     this->siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
   }
 
   MACRO GenerateLibCode(RECORD data)
   {
+    data := this->ConvertToExpectedData(data);
     this->libcode->value := GenerateSiteProfileLibrary(this->baseurl->value, data);
   }
 
   MACRO GenerateWittyCode(RECORD data)
   {
+    data := this->ConvertToExpectedData(data);
     this->wittycode->value := GenerateSiteProfileWitty(data);
   }
 
@@ -143,6 +166,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     data.filetypes := DEFAULT RECORD ARRAY;
     data.foldertypes := DEFAULT RECORD ARRAY;
     data.screen_only := TRUE;
+
+    data := this->ConvertToExpectedData(data);
 
     this->screen_siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
   }
@@ -170,6 +195,12 @@ PUBLIC OBJECTTYPE EditMember EXTEND TolliumScreenBase
   MACRO Init(RECORD data)
   {
     this->row->value := data.row;
+    this->OnTypeChange();
+  }
+
+  MACRO OnTypeChange()
+  {
+    this->datetimesettings->visible := this->type->value = "datetime";
   }
 
   BOOLEAN FUNCTION Submit()

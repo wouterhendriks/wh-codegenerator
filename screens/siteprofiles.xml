@@ -29,7 +29,10 @@
         <part width="1pr" marginright="5px">
           <box title="Settings">
             <textedit name="baseurl" width="1pr" validationchecks="url" onchange="dogeneratecode" title="Base URL" />
-            <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
+            <line>
+              <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
+              <text title="" value="(singular)" />
+            </line>
             <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library name" />
             <line layout="left">
               <checkbox name="use_rtd" title="" label="Use an RTD as the main file type" onchange="dogeneratecode" value="true" />
@@ -83,9 +86,10 @@
       <box title="Settings">
         <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" required="true" />
         <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" />
-        <select composition="row" cellname="type" type="pulldown" name="type" title="Type">
+        <select composition="row" cellname="type" type="pulldown" name="type" title="Type" onchange="ontypechange">
           <!-- <option rowkey="array" title="Array" /> -->
           <option rowkey="boolean" title="Boolean" />
+          <option rowkey="datetime" title="Date / time" />
           <option rowkey="image" title="Image" />
           <option rowkey="richdocument" title="Rich document (RTE)" />
           <option rowkey="string" title="String" />
@@ -93,6 +97,21 @@
         </select>
         <line layout="left">
           <checkbox composition="row" cellname="required" title="" label="This is a required field" />
+        </line>
+      </box>
+      <box title="Date (time) settings" name="datetimesettings" visible="false">
+        <select composition="row" cellname="type_dt_datetimetype" name="type_dt_datetimetype" type="pulldown" title="Type">
+          <option rowkey="date" title="Date (default)" selected="true" />
+          <option rowkey="datetime" title="Date + time" />
+          <option rowkey="time" title="Time" />
+        </select>
+        <select composition="row" cellname="type_dt_precision" name="type_dt_precision" type="pulldown" title="Time precision">
+          <option rowkey="minutes" title="Minutes (default)" selected="true" />
+          <option rowkey="seconds" title="Seconds" />
+          <option rowkey="mlliseconds" title="Milliseconds" />
+        </select>
+        <line layout="left">
+          <checkbox composition="row" cellname="type_dt_storeutc" name="storeutc" title="" label="Date(time) value is stored as UTC" />
         </line>
       </box>
       <defaultformbuttons buttons="ok cancel" />

@@ -372,10 +372,27 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" ';
 
-          IF (siteprofmember.settings.datetype = "date")
-            xml := xml || 'type="date" ';
-          ELSE IF (siteprofmember.settings.datetype = "datetime")
-            xml := xml || 'type="datetime" ';
+          STRING dttype := "date";
+          IF (CellExists(siteprofmember.settings, "datetype"))
+          {
+            IF (siteprofmember.settings.datetype = "datetime")
+              dttype := "datetime";
+            ELSE IF (siteprofmember.settings.datetype = "time")
+              dttype := "time";
+          }
+
+          xml := xml || 'type="' || dttype || '" ';
+
+          IF (dttype IN ["datetime","time"])
+          {
+            // check for non-default precision setting (default = "minutes")
+            IF (CellExists(siteprofmember.settings, "precision") AND siteprofmember.settings.precision != "minutes")
+              xml := xml || 'precision="' || siteprofmember.settings.precision || '" ';
+          }
+
+          // check for non-default storeutc setting (default = FALSE)
+          IF (CellExists(siteprofmember.settings, "storeutc") AND siteprofmember.settings.storeutc = TRUE)
+            xml := xml || 'storeutc="true" ';
 
           xml := xml
               || (siteprofmember.required ? 'required="true" ' : '')
@@ -437,38 +454,39 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING o := '<?wh\n';
+  STRING ARRAY loadlibs;
 
   IF (filetype_is_rtd)
-    o := o || 'LOADLIB "wh::xml/dom.whlib";\n';
+    INSERT 'wh::xml/dom.whlib' INTO loadlibs AT END;
 
-  o := o || 'LOADLIB "wh::witty.whlib";\n';
+  INSERT 'wh::witty.whlib' INTO loadlibs AT END;
 
   IF (filetype_is_rtd)
-    o := o || 'LOADLIB "module::publisher/internal/renderers/rtd.whlib";\n';
+    INSERT 'module::publisher/internal/renderers/rtd.whlib' INTO loadlibs AT END;
 
-  o := o || 'LOADLIB "module::publisher/webdesign.whlib";\n'
-         || 'LOADLIB "module::system/database.whlib";\n'
-         || 'LOADLIB "module::system/whfs.whlib";\n'
-         || '\n'
-         || 'PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
-         || '<\n'
-         || '  RECORD wittydata;\n'
-         || '  BOOLEAN isindex;\n'
-         || '\n'
-         || '  UPDATE PUBLIC MACRO PrepareForRendering(OBJECT webdesign)\n'
-         || '  {\n'
-         || '    this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
-         || '\n'
-         || '     IF (this->isindex)\n'
-         || '       this->PrepareForIndex(webdesign);\n'
-         || '     ELSE\n'
-         || '       this->PrepareForDetails(webdesign);\n'
-         || '  }\n'
-         || '\n'
-         || '  MACRO PrepareForIndex(OBJECT webdesign)\n'
-         || '  {\n'
-         || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n';
+  loadlibs := loadlibs CONCAT [ 'module::publisher/webdesign.whlib'
+                              , 'module::system/database.whlib'
+                              , 'module::system/whfs.whlib'
+                              ];
+
+  STRING o := 'PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
+           || '<\n'
+           || '  RECORD wittydata;\n'
+           || '  BOOLEAN isindex;\n'
+           || '\n'
+           || '  UPDATE PUBLIC MACRO PrepareForRendering(OBJECT webdesign)\n'
+           || '  {\n'
+           || '    this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
+           || '\n'
+           || '     IF (this->isindex)\n'
+           || '       this->PrepareForIndex(webdesign);\n'
+           || '     ELSE\n'
+           || '       this->PrepareForDetails(webdesign);\n'
+           || '  }\n'
+           || '\n'
+           || '  MACRO PrepareForIndex(OBJECT webdesign)\n'
+           || '  {\n'
+           || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n';
 
   IF (filetype_is_rtd)
     o := o || '    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");\n';
@@ -489,9 +507,36 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '                  AND title != ""\n'
          || '                  AND indexurl != ""\n'
          || '         ORDER BY ordering, ToUpperCase(title), id;\n'
-         || '\n'
-         || '    ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n'
          || '\n';
+
+  IF (Length(siteprofilesection.members) = 0)
+  {
+    o := o || '    ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n';
+  }
+  ELSE
+  {
+    o := o || '    ' || name_plural || ' := SELECT *\n';
+
+    FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+    {
+      SWITCH (siteprofmember.type)
+      {
+        CASE "datetime"
+        {
+          IF ('wh::datetime.whlib' NOT IN loadlibs)
+            INSERT 'wh::datetime.whlib' INTO loadlibs AT 0;
+
+          //FIXME: Take 'precision' and 'storeutc' into account
+
+          o := o || AddWhiteSpace(Length('    ' || name_plural || ' := SELECT')-1) || ', ' || siteprofmember.name || ' := FormatDateTime("%d-%m-%Y", ' || siteprofmember.name || ')\n';
+        }
+      }
+    }
+
+    o := o || AddWhiteSpace(Length('    ' || name_plural || ' := SELECT')-4) || 'FROM ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n';
+  }
+
+  o := o || '\n';
 
   IF (filetype_is_rtd)
   {
@@ -516,6 +561,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '\n'
          || '  MACRO PrepareForDetails(OBJECT webdesign)\n'
          || '  {\n'
+         // FIXME: Support for custom cells, like dates and RTEs
          || '    RECORD ' || name || 'data := webdesign->targetobject->GetInstanceData("' || baseurl || 'xmlns/filetype/' || name || '");\n'
          || '\n';
 
@@ -539,6 +585,13 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '    EmbedWittyComponent(this->isindex ? "' || name_plural || 'index" : "' || name || 'details", this->wittydata);\n'
          || '  }\n'
          || '>;\n';
+
+  // add <?wh and loadlibs
+  STRING startoutput := '<?wh\n';
+  FOREVERY (STRING lib FROM loadlibs)
+    startoutput := startoutput || 'LOADLIB "' || lib || '"\n';
+
+  o := startoutput || "\n" || o;
 
   RETURN o;
 }
@@ -586,4 +639,14 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   o := o || '[/component]\n';
 
   RETURN o;
+}
+
+STRING FUNCTION AddWhiteSpace(INTEGER numspaces)
+{
+  STRING text;
+
+  FOR (INTEGER i := 0; i < numspaces; i := i + 1)
+    text := text || ' ';
+
+  RETURN text;
 }
