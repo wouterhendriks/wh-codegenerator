@@ -589,7 +589,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   // add <?wh and loadlibs
   STRING startoutput := '<?wh\n';
   FOREVERY (STRING lib FROM loadlibs)
-    startoutput := startoutput || 'LOADLIB "' || lib || '"\n';
+    startoutput := startoutput || 'LOADLIB "' || lib || '";\n';
 
   o := startoutput || "\n" || o;
 
