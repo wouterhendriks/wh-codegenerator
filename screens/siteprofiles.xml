@@ -35,7 +35,10 @@
             </line>
             <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library name" />
             <line layout="left">
-              <checkbox name="use_rtd" title="" label="Use an RTD as the main file type" onchange="dogeneratecode" value="true" />
+              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type" onchange="dogeneratecode" value="true" />
+            </line>
+            <line layout="left">
+              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file" onchange="dogeneratecode" value="true" />
             </line>
           </box>
           <box height="1pr" title="Members">
@@ -91,7 +94,7 @@
           <option rowkey="boolean" title="Boolean" />
           <option rowkey="datetime" title="Date / time" />
           <option rowkey="image" title="Image" />
-          <option rowkey="richdocument" title="Rich document (RTE)" />
+          <option rowkey="richdocument" title="Rich text (RTE)" />
           <option rowkey="string" title="String" />
           <option rowkey="whfsref" title="WHFS reference (file or folder)" />
         </select>

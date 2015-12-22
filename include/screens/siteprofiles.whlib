@@ -35,6 +35,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->lib->value := prefillsettings.lib;
       this->members->value := SELECT * FROM prefillsettings.members;
       this->use_rtd->value := prefillsettings.use_rtd;
+      this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
 
       this->DoGenerateCode();
     }
@@ -116,6 +117,9 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       INSERT CELL filetype_is_rtd := TRUE INTO data;
     }
 
+    IF (this->index_is_rtd->value = TRUE)
+      INSERT CELL index_is_rtd := TRUE INTO data;
+
     this->GenerateSiteProfileCode(data);
     this->GenerateLibCode(data);
     this->GenerateWittyCode(data);
@@ -180,6 +184,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                        , lib := this->lib->value
                        , members := this->members->value
                        , use_rtd := this->use_rtd->value
+                       , index_is_rtd := this->index_is_rtd->value
                        ];
 
     OBJECT work := this->BeginWork();

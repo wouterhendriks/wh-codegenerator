@@ -453,6 +453,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+  BOOLEAN index_is_rtd := CellExists(siteprofilesection, "index_is_rtd") AND siteprofilesection.index_is_rtd = TRUE;
 
   STRING ARRAY loadlibs;
 
@@ -460,9 +461,6 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     INSERT 'wh::xml/dom.whlib' INTO loadlibs AT END;
 
   INSERT 'wh::witty.whlib' INTO loadlibs AT END;
-
-  IF (filetype_is_rtd)
-    INSERT 'module::publisher/internal/renderers/rtd.whlib' INTO loadlibs AT END;
 
   loadlibs := loadlibs CONCAT [ 'module::publisher/webdesign.whlib'
                               , 'module::system/database.whlib'
@@ -504,6 +502,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   o := o || '             FROM system.fs_objects\n'
          || '            WHERE parent = webdesign->targetfolder->id\n'
          || '                  AND type = ' || (filetype_is_rtd ? 'rtd' : name) || 'type->id\n'
+         || '                  AND id != webdesign->targetfolder->indexdoc\n'
          || '                  AND title != ""\n'
          || '                  AND indexurl != ""\n'
          || '         ORDER BY ordering, ToUpperCase(title), id;\n'
@@ -555,8 +554,15 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
            || '\n';
   }
 
-  o := o || '    this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n'
-         || '                       ];\n'
+  IF (index_is_rtd)
+    o := o || '    OBJECT indexpagecontents := webdesign->MakeRTDFromFile(webdesign->targetobject->id);\n\n';
+
+  o := o || '    this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n';
+
+  IF (index_is_rtd)
+    o := o || '                       , body := PTR indexpagecontents->RenderAllObjects()\n';
+
+  o := o || '                       ];\n'
          || '  }\n'
          || '\n'
          || '  MACRO PrepareForDetails(OBJECT webdesign)\n'
@@ -566,16 +572,12 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '\n';
 
   IF (filetype_is_rtd)
-  {
-    o := o || '    OBJECT rtd := NEW RenderRTD(webdesign->targetobject);\n'
-           || '    rtd->PrepareForRendering(webdesign);\n'
-           || '\n';
-  }
+    o := o || '    OBJECT pagecontents := webdesign->MakeRTDFromFile(webdesign->targetobject->id);\n\n';
 
   o := o || '    this->wittydata := [ ' || name || 'data := ' || name || 'data\n';
 
   IF (filetype_is_rtd)
-    o := o || '                       , body := PTR rtd->RunBody(webdesign)\n';
+    o := o || '                       , body := PTR pagecontents->RenderAllObjects()\n';
 
   o := o || '                       ];\n'
          || '  }\n'
@@ -604,14 +606,17 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+  BOOLEAN index_is_rtd := CellExists(siteprofilesection, "index_is_rtd") AND siteprofilesection.index_is_rtd = TRUE;
 
-  STRING o := '[component ' || name_plural || 'index]\n'
-           || '  [forevery ' || name_plural || ']\n';
+  STRING o := '[component ' || name_plural || 'index]\n';
+
+  IF (index_is_rtd)
+    o := o || '  RTD body: [body]\n\n';
+
+  o := o || '  [forevery ' || name_plural || ']\n';
 
   IF (filetype_is_rtd)
-  {
     o := o || '    Intro: [intro]<br />\n';
-  }
 
   // FIXME: Print stuff based on member type
   FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
