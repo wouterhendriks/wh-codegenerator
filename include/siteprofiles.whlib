@@ -126,7 +126,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data)
 
   SWITCH (ToUpperCase(data.type))
   {
-    CASE "STRING"
+    CASE "STRING","TEXTAREA"
     {
       xml := xml || 'string"';
     }
@@ -136,7 +136,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data)
     }
     CASE "FILE","IMAGE"
     {
-      xml := xml || 'file" publish="true"';
+      xml := xml || 'file"';
     }
     DEFAULT
     {
@@ -218,12 +218,13 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
   {
     IF (Length(box.members) > 0)
     {
-      xml := xml ||  '      <box title="' || box.title || '" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n';
+      xml := xml ||  '      <t:heading title="' || box.title || '" />\n';
 
       FOREVERY (RECORD siteprofmember FROM box.members)
         xml := xml || GetPropertyEditorElement(siteprofmember) || "\n";
 
-      xml := xml ||  '      </box>\n';
+      if (#box+1 < Length(boxes))
+        xml := xml ||  '      <t:hr />\n\n';
     }
   }
 
@@ -255,20 +256,20 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                   || '/>';
               */
               xml := xml
-                  || '        <line>\n'
-                  || '          <textedit composition="fsinstance" '
+                  || '      <t:line>\n'
+                  || '        <t:textedit composition="fsinstance" '
                   || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
                   || 'title="' || siteprofmember.title || '" '
                   || (siteprofmember.required ? 'required="true" ' : '')
                   || 'width="10x" '
                   || '/>\n'
-                  || '          <text title="" value="(#cc00ff)" />\n'
-                  || '        </line>';
+                  || '        <t:text title="" value="(#cc00ff)" />\n'
+                  || '      </t:line>';
             }
             ELSE
             {
-                xml := xml || '        '
-                    || '<textedit composition="fsinstance" '
+                xml := xml || '      '
+                    || '<t:textedit composition="fsinstance" '
                     || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
                     || 'title="' || siteprofmember.title || '" ';
 
@@ -281,10 +282,21 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                     || '/>';
             }
         }
+        CASE "textarea"
+        {
+          xml := xml || '      '
+              || '<t:textarea composition="fsinstance" '
+              || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+              || 'title="' || siteprofmember.title || '" '
+              || 'width="1pr" '
+              || 'height="3x"'
+              || (siteprofmember.required ? 'required="true" ' : '')
+              || '/>';
+        }
         CASE "richdocument"
         {
             xml := xml
-                || '        <rte composition="fsinstance"\n'
+                || '      <t:rte composition="fsinstance"\n'
                 || '             cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
                 || '             height="1pr"\n'
                 || '             minwidth="400px"\n'
@@ -293,17 +305,17 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                 || '             tagfilter="b i a-href img ul ol li strike"\n'
                 || (siteprofmember.required ? '             required="true"\n' : '')
                 || '             type="html-block">\n'
-                || '          <linkhandlers>\n'
+                || '          <t:linkhandlers>\n'
                 || '            <p:internallinks />\n'
-                || '          </linkhandlers>\n'
-                || '        </rte>';
+                || '          </t:linkhandlers>\n'
+                || '        </t:rte>';
         }
         CASE "array"
         {
             //FIXME: Only add rowdatatype setup if we have more than one type
 
             xml := xml
-                || '        <arrayedit composition="fsinstance"\n'
+                || '      <t:arrayedit composition="fsinstance"\n'
                 || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
                 || '                   rowtypename="membertype"\n'
                 //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
@@ -312,24 +324,24 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
                 || '                   width="1pr"\n'
                 || '                   height="1pr"\n'
                 || '                   >\n'
-                || '          <column type="text" name="membertype" title="Type" />\n\n';
+                || '          <t:column type="text" name="membertype" title="Type" />\n\n';
 
             FOREVERY (RECORD membertype FROM siteprofmember.settings.types)
             {
-                xml := xml || '          '
-                    || '<rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
+                xml := xml || '      '
+                    || '<t:rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
                     || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
                     || 'title="' || membertype.title || '" '
                     || '/>\n';
             }
 
             xml := xml
-                || '        </arrayedit>';
+                || '        </t:arrayedit>';
         }
         CASE "image"
         {
             xml := xml
-                || '        <imageedit composition="fsinstance"\n'
+                || '      <t:imageedit composition="fsinstance"\n'
                 || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
                 || '                   imagewidth="300px"\n'
                 || '                   imageheight="300px"\n'
@@ -357,18 +369,18 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
         CASE "boolean"
         {
             xml := xml
-                || '        <line layout="left">\n'
-                || '          <checkbox composition="fsinstance" '
+                || '        <t:line layout="left">\n'
+                || '          <t:checkbox composition="fsinstance" '
                 || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
                 || 'title="" '
                 || 'label="' || siteprofmember.title || '" '
                 || '/>\n'
-                || '        </line>';
+                || '        </t:line>';
         }
         CASE "datetime"
         {
-          xml := xml || '        '
-              || '<datetime composition="fsinstance" '
+          xml := xml || '      '
+              || '<t:datetime composition="fsinstance" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" ';
 
@@ -418,7 +430,6 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
   STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
-
   IF (filetype_is_rtd)
     xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
 
@@ -432,7 +443,7 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
         || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
         || '    <denyfiletype typedef="*" />\n'
         || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
-        || '    <bodyrenderer library="lib/' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
+        || '    <bodyrenderer library="' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
         || '  </apply>\n\n'
 
         || '  <!-- Extend the interface for non-index files -->\n'

@@ -96,6 +96,7 @@
           <option rowkey="image" title="Image" />
           <option rowkey="richdocument" title="Rich text (RTE)" />
           <option rowkey="string" title="String" />
+          <option rowkey="textarea" title="Textarea" />
           <option rowkey="whfsref" title="WHFS reference (file or folder)" />
         </select>
         <line layout="left">
