@@ -101,8 +101,12 @@ STRING FUNCTION GetSiteProfileMember(RECORD data)
 {
   IF (ToUpperCase(data.type) = "ARRAY")
   {
-    STRING xml := '    <member name="' || GetSiteProfileXMLName(data.name) || '" type="array">\n'
-               || '      <member name="membertype" type="string" />\n';
+    STRING xml := '    <member name="' || GetSiteProfileXMLName(data.name) || '" type="array">\n';
+
+    BOOLEAN hasrowtypes := CellExists(data, "settings") AND CellExists(data.settings, "types") AND Length(data.settings.types) > 0;
+
+    IF (hasrowtypes)
+      xml := xml || '      <member name="membertype" type="string" />\n';
 
     RECORD ARRAY childmembers := SELECT *
                                       , name := GetSiteProfileXMLName(name)
@@ -161,40 +165,63 @@ PUBLIC STRING FUNCTION GetSiteProfileXMLName(STRING txt)
 
 STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
 {
-    STRING xml := '  <propertyeditor name="' || GetSiteProfileXMLName(data.name) || '">\n'
-               || '    <compositions>\n'
-               || '      <p:whfsinstance name="fsinstance" typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.name) || '" />\n'
-               || '    </compositions>\n'
-               || '    <newtab title="' || data.title || '">\n';
+  STRING xml := '  <propertyeditor name="' || GetSiteProfileXMLName(data.name) || '">\n'
+             || '    <compositions>\n'
+             || '      <p:whfsinstance name="fsinstance" typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.name) || '" />\n'
+             || '    </compositions>\n'
+             || '    <newtab title="' || data.title || '">\n';
 
-    xml := xml || AddBoxesToPropertyEditor(data.members);
+  xml := xml || AddBoxesToPropertyEditor(data.members);
 
-    xml := xml || '    </newtab>\n'
-               || '  </propertyeditor>';
+  xml := xml || '    </newtab>\n'
+             || '  </propertyeditor>';
 
-    // add screens for array types
-    RECORD ARRAY memberarraytypes := SELECT * FROM data.members WHERE type = "array";
-    FOREVERY (RECORD memberarraytype FROM memberarraytypes)
+  // add screens for array types
+  RECORD ARRAY memberarraytypes := SELECT * FROM data.members WHERE type = "array";
+  FOREVERY (RECORD memberarraytype FROM memberarraytypes)
+  {
+    IF (CellExists(memberarraytype, "settings") AND CellExists(memberarraytype.settings, "types") AND Length(memberarraytype.settings.types) >= 1)
     {
-        FOREVERY (RECORD arraytype FROM memberarraytype.settings.types)
-        {
-            xml := xml
-                || '\n\n  <screen title="' || memberarraytype.title || '" name="edit_' || GetSiteProfileXMLName(memberarraytype.name) || '_' || GetSiteProfileXMLName(arraytype.name) || '" implementation="rowedit" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n'
-                || '    <compositions>\n'
-                || '      <record name="row" />\n'
-                || '    </compositions>\n'
-                || '    <body>\n';
+      FOREVERY (RECORD arraytype FROM memberarraytype.settings.types)
+      {
+        xml := xml
+            || '\n\n  <t:screen title="' || memberarraytype.title || '" name="edit_' || GetSiteProfileXMLName(memberarraytype.name) || '_' || GetSiteProfileXMLName(arraytype.name) || '" implementation="rowedit">\n'
+            || '    <t:compositions>\n'
+            || '      <t:record name="row" />\n'
+            || '    </t:compositions>\n'
+            || '    <t:body>\n';
 
-            xml := xml || AddBoxesToPropertyEditor(arraytype.members);
+        xml := xml || AddBoxesToPropertyEditor(arraytype.members);
 
-            xml := xml
-                || '      <defaultformbuttons buttons="ok cancel" />\n'
-                || '    </body>\n'
-                || '  </screen>';
-        }
+        xml := xml
+            || '    </t:body>\n'
+            || '    <t:footer>\n'
+            || '      <t:defaultformbuttons buttons="ok cancel" />\n'
+            || '    </t:footer>\n'
+            || '  </t:screen>';
+      }
     }
+    ELSE IF (Length(memberarraytype.members) > 0)
+    {
+      xml := xml
+          || '\n\n  <t:screen title="Edit ' || memberarraytype.title || '" name="edit_' || GetSiteProfileXMLName(memberarraytype.name) || '" implementation="rowedit">\n'
+          || '    <t:compositions>\n'
+          || '      <t:record name="row" />\n'
+          || '    </t:compositions>\n'
+          || '    <t:body>\n';
 
-    RETURN xml;
+      xml := xml || AddBoxesToPropertyEditor(memberarraytype.members);
+
+      xml := xml
+          || '    </t:body>\n'
+          || '    <t:footer>\n'
+          || '      <t:defaultformbuttons buttons="ok cancel" />\n'
+          || '    </t:footer>\n'
+          || '  </t:screen>';
+    }
+  }
+
+  RETURN xml;
 }
 
 STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
@@ -237,184 +264,220 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
 
     SWITCH (siteprofmember.type)
     {
-        CASE "string"
+      CASE "string"
+      {
+        STRING specialtype;
+        IF (CellExists(siteprofmember, "settings") AND RecordExists(siteprofmember.settings) AND CellExists(siteprofmember.settings, "specialtype"))
+          specialtype := siteprofmember.settings.specialtype;
+
+        IF (specialtype = "color")
         {
-          STRING specialtype;
-          IF (RecordExists(siteprofmember.settings) AND CellExists(siteprofmember.settings, "specialtype"))
-            specialtype := siteprofmember.settings.specialtype;
-
-          IF (specialtype = "color")
-          {
-              /*
-              // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
-              // https://gitlab.b-lex.com/webhare/webhare/issues/335
-              xml := xml || '      '
-                  || '<coloredit composition="fsinstance" '
-                  || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                  || 'title="' || siteprofmember.title || '" '
-                  || (siteprofmember.required ? 'required="true" ' : '')
-                  || '/>';
-              */
-              xml := xml
-                  || '      <t:line>\n'
-                  || '        <t:textedit composition="fsinstance" '
-                  || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                  || 'title="' || siteprofmember.title || '" '
-                  || (siteprofmember.required ? 'required="true" ' : '')
-                  || 'width="10x" '
-                  || '/>\n'
-                  || '        <t:text title="" value="(#cc00ff)" />\n'
-                  || '      </t:line>';
-            }
-            ELSE
-            {
-                xml := xml || '      '
-                    || '<t:textedit composition="fsinstance" '
-                    || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                    || 'title="' || siteprofmember.title || '" ';
-
-                IF (specialtype = "integer")
-                  xml := xml || 'valuetype="integer" ';
-
-                xml := xml
-                    || (siteprofmember.required ? 'required="true" ' : '')
-                    || 'width="1pr" '
-                    || '/>';
-            }
-        }
-        CASE "textarea"
-        {
+          /*
+          // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
+          // https://gitlab.b-lex.com/webhare/webhare/issues/335
           xml := xml || '      '
-              || '<t:textarea composition="fsinstance" '
+              || '<coloredit composition="fsinstance" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" '
-              || 'width="1pr" '
-              || 'height="3x"'
               || (siteprofmember.required ? 'required="true" ' : '')
               || '/>';
+          */
+          xml := xml
+              || '      <t:line>\n'
+              || '        <t:textedit composition="fsinstance" '
+              || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+              || 'title="' || siteprofmember.title || '" '
+              || (siteprofmember.required ? 'required="true" ' : '')
+              || 'width="10x" '
+              || '/>\n'
+              || '        <t:text title="" value="(#cc00ff)" />\n'
+              || '      </t:line>';
         }
-        CASE "richdocument"
-        {
-            xml := xml
-                || '      <t:rte composition="fsinstance"\n'
-                || '             cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-                || '             height="1pr"\n'
-                || '             minwidth="400px"\n'
-                || '             minheight="250px"\n'
-                || '             errorlabel="' || siteprofmember.title || '"\n'
-                || '             tagfilter="b i a-href img ul ol li strike"\n'
-                || (siteprofmember.required ? '             required="true"\n' : '')
-                || '             type="html-block">\n'
-                || '          <t:linkhandlers>\n'
-                || '            <p:internallinks />\n'
-                || '          </t:linkhandlers>\n'
-                || '        </t:rte>';
-        }
-        CASE "array"
-        {
-            //FIXME: Only add rowdatatype setup if we have more than one type
-
-            xml := xml
-                || '      <t:arrayedit composition="fsinstance"\n'
-                || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-                || '                   rowtypename="membertype"\n'
-                //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-                || '                   orderable="true"\n'
-                || '                   rowselect="true"\n'
-                || '                   width="1pr"\n'
-                || '                   height="1pr"\n'
-                || '                   >\n'
-                || '          <t:column type="text" name="membertype" title="Type" />\n\n';
-
-            FOREVERY (RECORD membertype FROM siteprofmember.settings.types)
-            {
-                xml := xml || '      '
-                    || '<t:rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
-                    || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
-                    || 'title="' || membertype.title || '" '
-                    || '/>\n';
-            }
-
-            xml := xml
-                || '        </t:arrayedit>';
-        }
-        CASE "image"
-        {
-            xml := xml
-                || '      <t:imageedit composition="fsinstance"\n'
-                || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-                || '                   imagewidth="300px"\n'
-                || '                   imageheight="300px"\n'
-                || '                   preserveifunchanged="true"\n'
-                || '                   errorlabel="' || siteprofmember.title || '"\n'
-                || '                   width="1pr"\n'
-                || '                   height="1pr"\n'
-                || (siteprofmember.required ? '                   required="true"\n' : '')
-                || '                   />';
-        }
-        CASE "whfsref"
-        {
-            xml := xml
-                || '        <!-- FIXME: link this field to something -->\n'
-                || '        <p:browseforobject composition="fsinstance"\n'
-                || '                           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-                || '                           title="' || siteprofmember.title || '"\n'
-                || '                           width="1pr"\n'
-                || '                           acceptfolders="false"\n'
-                || '                           acceptfiles="true"\n'
-                || '                           fullpath="/"\n'
-                || (siteprofmember.required ? '                           required="true"\n' : '')
-                || '                           />';
-        }
-        CASE "boolean"
-        {
-            xml := xml
-                || '        <t:line layout="left">\n'
-                || '          <t:checkbox composition="fsinstance" '
-                || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
-                || 'title="" '
-                || 'label="' || siteprofmember.title || '" '
-                || '/>\n'
-                || '        </t:line>';
-        }
-        CASE "datetime"
+        ELSE
         {
           xml := xml || '      '
-              || '<t:datetime composition="fsinstance" '
+              || '<t:textedit composition="fsinstance" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" ';
 
-          STRING dttype := "date";
-          IF (CellExists(siteprofmember.settings, "datetype"))
-          {
-            IF (siteprofmember.settings.datetype = "datetime")
-              dttype := "datetime";
-            ELSE IF (siteprofmember.settings.datetype = "time")
-              dttype := "time";
-          }
-
-          xml := xml || 'type="' || dttype || '" ';
-
-          IF (dttype IN ["datetime","time"])
-          {
-            // check for non-default precision setting (default = "minutes")
-            IF (CellExists(siteprofmember.settings, "precision") AND siteprofmember.settings.precision != "minutes")
-              xml := xml || 'precision="' || siteprofmember.settings.precision || '" ';
-          }
-
-          // check for non-default storeutc setting (default = FALSE)
-          IF (CellExists(siteprofmember.settings, "storeutc") AND siteprofmember.settings.storeutc = TRUE)
-            xml := xml || 'storeutc="true" ';
+          IF (specialtype = "integer")
+            xml := xml || 'valuetype="integer" ';
 
           xml := xml
               || (siteprofmember.required ? 'required="true" ' : '')
+              || 'width="1pr" '
               || '/>';
         }
-        DEFAULT
+      }
+      CASE "textarea"
+      {
+        xml := xml || '      '
+            || '<t:textarea composition="fsinstance" '
+            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'title="' || siteprofmember.title || '" '
+            || 'width="1pr" '
+            || 'height="3x" '
+            || (siteprofmember.required ? 'required="true" ' : '')
+            || '/>';
+      }
+      CASE "richdocument"
+      {
+          xml := xml
+              || '      <t:rte composition="fsinstance"\n'
+              || '             cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+              || '             height="1pr"\n'
+              || '             minwidth="400px"\n'
+              || '             minheight="250px"\n'
+              || '             errorlabel="' || siteprofmember.title || '"\n'
+              || '             tagfilter="b i a-href img ul ol li strike"\n'
+              || (siteprofmember.required ? '             required="true"\n' : '')
+              || '             type="html-block"\n'
+              || '             >\n'
+              || '        <t:linkhandlers>\n'
+              || '          <p:internallinks />\n'
+              || '        </t:linkhandlers>\n'
+              || '      </t:rte>';
+      }
+      CASE "array"
+      {
+        BOOLEAN hasrowtypes := CellExists(siteprofmember, "settings") AND CellExists(siteprofmember.settings, "types") AND Length(siteprofmember.settings.types) > 0;
+
+/*
+<screen name="edit_header_link" title="Bewerk link" implementation="rowedit" xmlns="http://www.webhare.net/xmlns/tollium/screens">
+<compositions>
+  <record name="row" />
+</compositions>
+<body>
+  <box title="Instellingen" xmlns="http://www.webhare.net/xmlns/tollium/screens">
+    <textedit composition="row" cellname="title" title="Titel" required="true" width="1pr" />
+    <p:intextlink composition="row" cellname="link" title="Link" width="1pr" required="true" />
+  </box>
+  <defaultformbuttons buttons="ok cancel" />
+</body>
+</screen>
+
+*/
+
+        xml := xml
+            || '      <t:arrayedit composition="fsinstance"\n'
+            || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || (hasrowtypes ? '                   rowtypename="membertype"\n' : '')
+            //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || (NOT hasrowtypes ? '                   roweditscreen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '"\n' : '')
+            || '                   orderable="true"\n'
+            || '                   rowselect="true"\n'
+            || '                   width="1pr"\n'
+            || '                   height="1pr"\n'
+            || '                   >\n';
+
+        IF (hasrowtypes)
         {
-            IF (ToUpperCase(siteprofmember.type) NOT IN ["FIXME","TABLE","CATEGORIES"]) abort(siteprofmember.type); // remove this when certain we support all fields
-            xml := xml || '      <!-- ' || siteprofmember.comments || ' -->';
+          xml := xml || '        <t:column type="text" name="membertype" title="Type" />\n\n';
+
+          FOREVERY (RECORD membertype FROM siteprofmember.settings.types)
+          {
+              xml := xml || '      '
+                  || '<t:rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
+                  || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
+                  || 'title="' || membertype.title || '" '
+                  || '/>\n';
+          }
+
         }
+        ELSE
+        {
+          FOREVERY (RECORD arraymember FROM siteprofmember.members)
+          {
+            SWITCH (ToUpperCase(arraymember.type))
+            {
+              CASE "TEXTEDIT"
+              {
+                xml := xml || '        <t:column type="text" name="' || GetSiteProfileXMLName(arraymember.name) || '" title="' || arraymember.title || '" />\n';
+              }
+            }
+          }
+        }
+
+        xml := xml || '      </t:arrayedit>';
+      }
+      CASE "image"
+      {
+        xml := xml
+            || '      <t:imageedit composition="fsinstance"\n'
+            || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || '                   imagewidth="300px"\n'
+            || '                   imageheight="300px"\n'
+            || '                   preserveifunchanged="true"\n'
+            || '                   errorlabel="' || siteprofmember.title || '"\n'
+            || '                   width="1pr"\n'
+            || '                   height="1pr"\n'
+            || (siteprofmember.required ? '                   required="true"\n' : '')
+            || '                   />';
+      }
+      CASE "whfsref"
+      {
+        xml := xml
+            || '      <!-- FIXME: link this field to something -->\n'
+            || '      <p:browseforobject composition="fsinstance"\n'
+            || '                         cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || '                         title="' || siteprofmember.title || '"\n'
+            || '                         width="1pr"\n'
+            || '                         acceptfolders="false"\n'
+            || '                         acceptfiles="true"\n'
+            || '                         fullpath="/"\n'
+            || (siteprofmember.required ? '                         required="true"\n' : '')
+            || '                         />';
+      }
+      CASE "boolean"
+      {
+        xml := xml
+            || '      <t:line layout="left">\n'
+            || '        <t:checkbox composition="fsinstance" '
+            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'title="" '
+            || 'label="' || siteprofmember.title || '" '
+            || '/>\n'
+            || '      </t:line>';
+      }
+      CASE "datetime"
+      {
+        xml := xml || '      '
+            || '<t:datetime composition="fsinstance" '
+            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'title="' || siteprofmember.title || '" ';
+
+        STRING dttype := "date";
+        IF (CellExists(siteprofmember.settings, "datetype"))
+        {
+          IF (siteprofmember.settings.datetype = "datetime")
+            dttype := "datetime";
+          ELSE IF (siteprofmember.settings.datetype = "time")
+            dttype := "time";
+        }
+
+        xml := xml || 'type="' || dttype || '" ';
+
+        IF (dttype IN ["datetime","time"])
+        {
+          // check for non-default precision setting (default = "minutes")
+          IF (CellExists(siteprofmember.settings, "precision") AND siteprofmember.settings.precision != "minutes")
+            xml := xml || 'precision="' || siteprofmember.settings.precision || '" ';
+        }
+
+        // check for non-default storeutc setting (default = FALSE)
+        IF (CellExists(siteprofmember.settings, "storeutc") AND siteprofmember.settings.storeutc = TRUE)
+          xml := xml || 'storeutc="true" ';
+
+        xml := xml
+            || (siteprofmember.required ? 'required="true" ' : '')
+            || '/>';
+      }
+      DEFAULT
+      {
+        IF (ToUpperCase(siteprofmember.type) NOT IN ["FIXME","TABLE","CATEGORIES"])
+          abort(siteprofmember.type); // remove this when certain we support all fields
+        xml := xml || '      <!-- ' || siteprofmember.comments || ' -->';
+      }
     }
 
     RETURN xml;
