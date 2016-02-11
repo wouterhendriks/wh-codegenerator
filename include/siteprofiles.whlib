@@ -191,7 +191,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
             || '    </t:compositions>\n'
             || '    <t:body>\n';
 
-        xml := xml || AddBoxesToPropertyEditor(arraytype.members);
+        xml := xml || AddBoxesToPropertyEditor(arraytype.members, "row");
 
         xml := xml
             || '    </t:body>\n'
@@ -210,7 +210,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
           || '    </t:compositions>\n'
           || '    <t:body>\n';
 
-      xml := xml || AddBoxesToPropertyEditor(memberarraytype.members);
+      xml := xml || AddBoxesToPropertyEditor(memberarraytype.members, "row");
 
       xml := xml
           || '    </t:body>\n'
@@ -224,7 +224,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
   RETURN xml;
 }
 
-STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
+STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING composition_name DEFAULTSTO "")
 {
   RECORD ARRAY boxes := [[ title := defaultboxname
                          , members := DEFAULT RECORD ARRAY
@@ -248,7 +248,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
       xml := xml ||  '      <t:heading title="' || box.title || '" />\n';
 
       FOREVERY (RECORD siteprofmember FROM box.members)
-        xml := xml || GetPropertyEditorElement(siteprofmember) || "\n";
+        xml := xml || GetPropertyEditorElement(siteprofmember, composition_name) || "\n";
 
       if (#box+1 < Length(boxes))
         xml := xml ||  '      <t:hr />\n\n';
@@ -258,9 +258,11 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers)
   RETURN xml;
 }
 
-STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
+STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING composition_name DEFAULTSTO "")
 {
     STRING xml;
+
+    composition_name := composition_name ?? "fsinstance";
 
     SWITCH (siteprofmember.type)
     {
@@ -276,7 +278,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
           // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
           // https://gitlab.b-lex.com/webhare/webhare/issues/335
           xml := xml || '      '
-              || '<coloredit composition="fsinstance" '
+              || '<coloredit composition="' || composition_name || '" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" '
               || (siteprofmember.required ? 'required="true" ' : '')
@@ -284,7 +286,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
           */
           xml := xml
               || '      <t:line>\n'
-              || '        <t:textedit composition="fsinstance" '
+              || '        <t:textedit composition="' || composition_name || '" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" '
               || (siteprofmember.required ? 'required="true" ' : '')
@@ -296,7 +298,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
         ELSE
         {
           xml := xml || '      '
-              || '<t:textedit composition="fsinstance" '
+              || '<t:textedit composition="' || composition_name || '" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" ';
 
@@ -312,7 +314,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       CASE "textarea"
       {
         xml := xml || '      '
-            || '<t:textarea composition="fsinstance" '
+            || '<t:textarea composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || 'title="' || siteprofmember.title || '" '
             || 'width="1pr" '
@@ -323,7 +325,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       CASE "richdocument"
       {
           xml := xml
-              || '      <t:rte composition="fsinstance"\n'
+              || '      <t:rte composition="' || composition_name || '"\n'
               || '             cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
               || '             height="1pr"\n'
               || '             minwidth="400px"\n'
@@ -359,7 +361,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
 */
 
         xml := xml
-            || '      <t:arrayedit composition="fsinstance"\n'
+            || '      <t:arrayedit composition="' || composition_name || '"\n'
             || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || (hasrowtypes ? '                   rowtypename="membertype"\n' : '')
             //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
@@ -403,7 +405,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       CASE "image"
       {
         xml := xml
-            || '      <t:imageedit composition="fsinstance"\n'
+            || '      <t:imageedit composition="' || composition_name || '"\n'
             || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || '                   imagewidth="300px"\n'
             || '                   imageheight="300px"\n'
@@ -418,7 +420,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       {
         xml := xml
             || '      <!-- FIXME: link this field to something -->\n'
-            || '      <p:browseforobject composition="fsinstance"\n'
+            || '      <p:browseforobject composition="' || composition_name || '"\n'
             || '                         cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || '                         title="' || siteprofmember.title || '"\n'
             || '                         width="1pr"\n'
@@ -432,7 +434,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       {
         xml := xml
             || '      <t:line layout="left">\n'
-            || '        <t:checkbox composition="fsinstance" '
+            || '        <t:checkbox composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || 'title="" '
             || 'label="' || siteprofmember.title || '" '
@@ -442,7 +444,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember)
       CASE "datetime"
       {
         xml := xml || '      '
-            || '<t:datetime composition="fsinstance" '
+            || '<t:datetime composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || 'title="' || siteprofmember.title || '" ';
 
