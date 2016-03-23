@@ -411,8 +411,6 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             || '                   imageheight="300px"\n'
             || '                   preserveifunchanged="true"\n'
             || '                   errorlabel="' || siteprofmember.title || '"\n'
-            || '                   width="1pr"\n'
-            || '                   height="1pr"\n'
             || (siteprofmember.required ? '                   required="true"\n' : '')
             || '                   />';
       }
@@ -513,7 +511,12 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
         || '  <!-- Extend the interface for non-index files -->\n'
         || '  <apply>\n'
-        || '    <to type="file" filetype="' || xmlns_file || '" parenttype="' || xmlns_folder || '" />\n'
+        || '    <to type="file" filetype="' || xmlns_file || '" parenttype="' || xmlns_folder || '" />\n';
+
+    IF (NOT filetype_is_rtd)
+      xml := xml || '    <setobjecteditor name="publisher:propertydialog" />\n';
+
+    xml := xml
         || '    <extendproperties name="' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
         || '  </apply>\n\n';
   }
