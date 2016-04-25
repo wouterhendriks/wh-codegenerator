@@ -344,22 +344,6 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       {
         BOOLEAN hasrowtypes := CellExists(siteprofmember, "settings") AND CellExists(siteprofmember.settings, "types") AND Length(siteprofmember.settings.types) > 0;
 
-/*
-<screen name="edit_header_link" title="Bewerk link" implementation="rowedit" xmlns="http://www.webhare.net/xmlns/tollium/screens">
-<compositions>
-  <record name="row" />
-</compositions>
-<body>
-  <box title="Instellingen" xmlns="http://www.webhare.net/xmlns/tollium/screens">
-    <textedit composition="row" cellname="title" title="Titel" required="true" width="1pr" />
-    <p:intextlink composition="row" cellname="link" title="Link" width="1pr" required="true" />
-  </box>
-  <defaultformbuttons buttons="ok cancel" />
-</body>
-</screen>
-
-*/
-
         xml := xml
             || '      <t:arrayedit composition="' || composition_name || '"\n'
             || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
@@ -474,7 +458,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       }
       DEFAULT
       {
-        IF (ToUpperCase(siteprofmember.type) NOT IN ["FIXME","TABLE","CATEGORIES"])
+        IF (ToUpperCase(siteprofmember.type) NOT IN ["FIXME","TABLE","CATEGORIES","TAGS"])
           abort(siteprofmember.type); // remove this when certain we support all fields
         xml := xml || '      <!-- ' || siteprofmember.comments || ' -->';
       }
