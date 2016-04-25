@@ -9,10 +9,10 @@ LOADLIB "module::system/database.whlib";
 LOADLIB "module::system/whfs.whlib";
 LOADLIB "module::codegenerator/siteprofiles.whlib";
 
-STRING jsonpath := "moduledata::codegenerator/sections_wst_hellendoorn.json"; // path to JSON source file
-STRING baseurl := "http://www.wst-hellendoorn.nl/"; // used in XML namespaces
-STRING sitename := "WST Hellendoorn"; // used for the 'addfsobjects' option
-STRING lib := "wst_hellendoorn.whlib";
+STRING jsonpath := "moduledata::codegenerator/sections_lommers.json"; // path to JSON source file
+STRING baseurl := "http://www.lommers-lederwaren.nl/"; // used in XML namespaces
+STRING sitename := "Lommers Lederwaren"; // used for the 'addfsobjects' option
+STRING lib := "lommers_lederwaren.whlib";
 STRING lang := "nl"; // "nl", "en"
 
 RECORD args := ParseArguments(GetConsoleArguments(),
@@ -361,7 +361,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
                 curmember.members := ConvertFieldsToMembers(matrixmembers);
                 curmember.settings := [ types := membertypes ];
             }
-            CASE "DROPDOWN"
+            CASE "DROPDOWN", "RADIOBUTTONS"
             {
                 STRING comments;// := 'Options: ' || DeTokenize((SELECT AS STRING ARRAY ToLowerCase(blocktypefields.name) FROM blocktypefields), ", ");
                 IF (CellExists(field,"SETTINGS") AND RecordExists(field.settings))
@@ -378,7 +378,10 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
 
                 curmember.type := "string";
                 curmember.comments := comments;
-                curmember.settings := [ specialtype := "dropdown" ];
+                IF (ToUpperCase(field.type) = "DROPDOWN")
+                  curmember.settings := [ specialtype := "dropdown" ];
+                ELSE
+                  curmember.settings := [ specialtype := "radio" ];
             }
             CASE "LIGHTSWITCH"
             {
@@ -406,14 +409,14 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
                 Abort("Unknown date type: " || field.settings.showtime);
               }
             }
-            CASE "TABLE", "CATEGORIES" // no idea what to do with these
+            CASE "TABLE", "CATEGORIES", "TAGS" // no idea what to do with these
             {
               curmember.type := field.type;
               curmember.comments := "No idea what to do with: " || field.type;
             }
             DEFAULT
             {
-                Abort("Unknown Craft field type '" || field.type || "'");
+              Abort("Unknown Craft field type '" || field.type || "'. Data: " || AnyToString(field,'tree'));
             }
         }
 
