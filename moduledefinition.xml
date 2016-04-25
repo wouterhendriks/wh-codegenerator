@@ -10,7 +10,7 @@
   </meta>
 
   <portal>
-    <application group="apps" name="siteprofile" title="Siteprofile code generator" screen="siteprofiles.main">
+    <application group="apps" name="siteprofile" title="Siteprofile code generator" screen="siteprofiles.main" icon="tollium:misc/sourcecode">
       <accesscheck>
         <requireright right="superuser" />
       </accesscheck>
