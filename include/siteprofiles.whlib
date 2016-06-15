@@ -26,11 +26,11 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   // add <contenttye> with <member>s and <propertyeditor>s
   IF (Length(siteprofilesection.members) = 0) // no members, just a <contenttype> then
   {
-    o := o || '  <contenttype namespace="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n\n';
+    o := o || '  <contenttype namespace="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n\n';
   }
   ELSE
   {
-    o := o || '  <contenttype namespace="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '">\n';
+    o := o || '  <contenttype namespace="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '">\n';
 
     RECORD ARRAY members;
     FOREVERY (RECORD mem FROM siteprofilesection.members)
@@ -65,7 +65,7 @@ STRING FUNCTION GetFileType(RECORD data, STRING baseurl)
 
   BOOLEAN addwebpage := NOT CellExists(data, "no_webpage") OR data.no_webpage = FALSE;
 
-  STRING o := '  <filetype typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.title) || '"\n'
+  STRING o := '  <filetype typedef="' || baseurl || 'filetype/' || GetSiteProfileXMLName(data.title) || '"\n'
            || '            title="' || EncodeHTML(data.title) || '"\n'
            || '            blobiscontent="false"\n'
            || '            ispublishable="true"\n'
@@ -85,7 +85,7 @@ STRING FUNCTION GetFileType(RECORD data, STRING baseurl)
 
 STRING FUNCTION GetFolderType(RECORD data, STRING baseurl)
 {
-  RETURN '  <foldertype typedef="' || baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(data.title) || 's"\n'
+  RETURN '  <foldertype typedef="' || baseurl || 'foldertype/' || GetSiteProfileXMLName(data.title) || 's"\n'
       || '              title="' || EncodeHTML(data.title) || 's"\n'
       || '              tolliumicon="tollium:folders/projects"\n'
       || '              indexfile="contentlisting"\n'
@@ -93,7 +93,7 @@ STRING FUNCTION GetFolderType(RECORD data, STRING baseurl)
       || '              >\n'
       || '  </foldertype>\n'// we probably want to add something within
       || '\n'
-      || '  <contenttype namespace="' || baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(data.title) || 's">\n'
+      || '  <contenttype namespace="' || baseurl || 'foldertype/' || GetSiteProfileXMLName(data.title) || 's">\n'
       || '  </contenttype>';
 }
 
@@ -167,7 +167,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
 {
   STRING xml := '  <propertyeditor name="' || GetSiteProfileXMLName(data.name) || '">\n'
              || '    <compositions>\n'
-             || '      <p:whfsinstance name="fsinstance" typedef="' || baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(data.name) || '" />\n'
+             || '      <p:whfsinstance name="fsinstance" typedef="' || baseurl || 'filetype/' || GetSiteProfileXMLName(data.name) || '" />\n'
              || '    </compositions>\n'
              || '    <newtab title="' || data.title || '">\n';
 
@@ -476,13 +476,13 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING xmlns_file := baseurl || 'xmlns/filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+  STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
   IF (filetype_is_rtd)
     xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
 
   FOREVERY (RECORD foldertype FROM siteprofilesection.foldertypes)
   {
-    STRING xmlns_folder := baseurl || 'xmlns/foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
+    STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
 
     xml := xml
         || '  <!-- Only allow the ' || (filetype_is_rtd ? "RTD" : "custom") || ' file type in this folder, and run the template -->\n'
@@ -539,15 +539,15 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
            || '  {\n'
            || '    this->isindex := webdesign->targetfolder->indexdoc = webdesign->targetobject->id;\n'
            || '\n'
-           || '     IF (this->isindex)\n'
-           || '       this->PrepareForIndex(webdesign);\n'
-           || '     ELSE\n'
-           || '       this->PrepareForDetails(webdesign);\n'
+           || '    IF (this->isindex)\n'
+           || '      this->PrepareForIndex(webdesign);\n'
+           || '    ELSE\n'
+           || '      this->PrepareForDetails(webdesign);\n'
            || '  }\n'
            || '\n'
            || '  MACRO PrepareForIndex(OBJECT webdesign)\n'
            || '  {\n'
-           || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'xmlns/filetype/' || name || '");\n';
+           || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'filetype/' || name || '");\n';
 
   IF (filetype_is_rtd)
     o := o || '    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");\n';
@@ -631,7 +631,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '  MACRO PrepareForDetails(OBJECT webdesign)\n'
          || '  {\n'
          // FIXME: Support for custom cells, like dates and RTEs
-         || '    RECORD ' || name || 'data := webdesign->targetobject->GetInstanceData("' || baseurl || 'xmlns/filetype/' || name || '");\n'
+         || '    RECORD ' || name || 'data := webdesign->targetobject->GetInstanceData("' || baseurl || 'filetype/' || name || '");\n'
          || '\n';
 
   IF (filetype_is_rtd)
