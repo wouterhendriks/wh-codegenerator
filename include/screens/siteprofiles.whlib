@@ -99,10 +99,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                                                  , options := DEFAULT RECORD ARRAY
                                               FROM siteprofmember.members;
       }
-      ELSE IF (siteprofmember.type = "image")
-      {
-        members[#siteprofmember].comments := "Image";
-      }
     }
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)

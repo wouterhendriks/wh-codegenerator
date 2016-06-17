@@ -389,19 +389,20 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       CASE "image"
       {
         xml := xml
-            || '      <t:imageedit composition="' || composition_name || '"\n'
-            || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-            || '                   imagewidth="300px"\n'
-            || '                   imageheight="300px"\n'
-            || '                   preserveifunchanged="true"\n'
-            || '                   errorlabel="' || siteprofmember.title || '"\n'
-            || (siteprofmember.required ? '                   required="true"\n' : '')
-            || '                   />';
+            || '      <t:imgedit composition="' || composition_name || '"\n'
+            || '                 cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || '                 title=""\n'
+            || '                 width="300px"\n'
+            || '                 height="300px"\n'
+            || '                 preserveifunchanged="true"\n'
+            || '                 allowedactions="crop rotate refpoint"\n'
+            || '                 errorlabel="' || siteprofmember.title || '"\n'
+            || (siteprofmember.required ? '                 required="true"\n' : '')
+            || '                 />';
       }
       CASE "whfsref"
       {
         xml := xml
-            || '      <!-- FIXME: link this field to something -->\n'
             || '      <p:browseforobject composition="' || composition_name || '"\n'
             || '                         cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || '                         title="' || siteprofmember.title || '"\n'
@@ -485,15 +486,14 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
     STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
 
     xml := xml
-        || '  <!-- Only allow the ' || (filetype_is_rtd ? "RTD" : "custom") || ' file type in this folder, and run the template -->\n'
         || '  <apply>\n'
-        || '    <to type="file" parenttype="' || xmlns_folder || '" />\n'
+        || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
         || '    <denyfiletype typedef="*" />\n'
+        || '    <denyfoldertype typedef="*" />\n'
         || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
         || '    <bodyrenderer library="' || siteprofilesection.lib || '" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
         || '  </apply>\n\n'
 
-        || '  <!-- Extend the interface for non-index files -->\n'
         || '  <apply>\n'
         || '    <to type="file" filetype="' || xmlns_file || '" parenttype="' || xmlns_folder || '" />\n';
 
