@@ -134,11 +134,14 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     {
       SWITCH (siteprofmember.type)
       {
-        CASE "datetime"
+        CASE "array"
         {
-          siteprofmember.settings := CellInsert(siteprofmember.settings, "datetype", siteprofmember.type_dt_datetimetype);
-          siteprofmember.settings := CellInsert(siteprofmember.settings, "precision", siteprofmember.type_dt_precision);
-          siteprofmember.settings := CellInsert(siteprofmember.settings, "storeutc", siteprofmember.type_dt_storeutc);
+          FOREVERY (RECORD mem FROM siteprofmember.members)
+            siteprofmember.members[#mem] := this->ApplyConvertToExpectedData(mem);
+        }
+        DEFAULT
+        {
+          siteprofmember := this->ApplyConvertToExpectedData(siteprofmember);
         }
       }
 
@@ -146,6 +149,24 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     }
 
     RETURN data;
+  }
+
+  RECORD FUNCTION ApplyConvertToExpectedData(RECORD siteprofmember)
+  {
+    IF (NOT CellExists(siteprofmember, "settings"))
+      siteprofmember := CellInsert(siteprofmember, "settings", DEFAULT RECORD);
+
+    SWITCH (siteprofmember.type)
+    {
+      CASE "datetime"
+      {
+        siteprofmember.settings := CellInsert(siteprofmember.settings, "datetype", siteprofmember.type_dt_datetimetype);
+        siteprofmember.settings := CellInsert(siteprofmember.settings, "precision", siteprofmember.type_dt_precision);
+        siteprofmember.settings := CellInsert(siteprofmember.settings, "storeutc", siteprofmember.type_dt_storeutc);
+      }
+    }
+
+    RETURN siteprofmember;
   }
 
   MACRO GenerateSiteProfileCode(RECORD data)

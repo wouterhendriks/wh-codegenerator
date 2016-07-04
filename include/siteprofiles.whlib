@@ -204,7 +204,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl)
     ELSE IF (Length(memberarraytype.members) > 0)
     {
       xml := xml
-          || '\n\n  <t:screen title="Edit ' || memberarraytype.title || '" name="edit_' || GetSiteProfileXMLName(memberarraytype.name) || '" implementation="rowedit">\n'
+          || '\n\n  <t:screen title="Bewerk ' || ToLowerCase(memberarraytype.title) || '" name="edit_' || MakeSingular(GetSiteProfileXMLName(memberarraytype.name)) || '" implementation="rowedit">\n'
           || '    <t:compositions>\n'
           || '      <t:record name="row" />\n'
           || '    </t:compositions>\n'
@@ -263,6 +263,9 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     STRING xml;
 
     composition_name := composition_name ?? "fsinstance";
+
+    IF (NOT CellExists(siteprofmember, "settings"))
+      INSERT CELL settings := DEFAULT RECORD INTO siteprofmember;
 
     SWITCH (siteprofmember.type)
     {
@@ -349,7 +352,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             || '                   cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || (hasrowtypes ? '                   rowtypename="membertype"\n' : '')
             //|| '                   rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-            || (NOT hasrowtypes ? '                   roweditscreen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '"\n' : '')
+            || (NOT hasrowtypes ? '                   roweditscreen=".edit_' || MakeSingular(GetSiteProfileXMLName(siteprofmember.name)) || '"\n' : '')
             || '                   orderable="true"\n'
             || '                   rowselect="true"\n'
             || '                   width="1pr"\n'
@@ -445,7 +448,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         IF (dttype IN ["datetime","time"])
         {
           // check for non-default precision setting (default = "minutes")
-          IF (CellExists(siteprofmember.settings, "precision") AND siteprofmember.settings.precision != "minutes")
+          IF (CellExists(siteprofmember.settings, "precision"))
             xml := xml || 'precision="' || siteprofmember.settings.precision || '" ';
         }
 
@@ -717,4 +720,13 @@ STRING FUNCTION AddWhiteSpace(INTEGER numspaces)
     text := text || ' ';
 
   RETURN text;
+}
+
+STRING FUNCTION MakeSingular(STRING txt)
+{
+  // if txt ends with 's', removes that 's', making it singular
+  IF (Right(txt,1) = "s")
+    txt := Substring(txt, 0, Length(txt) - 1);
+
+  RETURN txt;
 }
