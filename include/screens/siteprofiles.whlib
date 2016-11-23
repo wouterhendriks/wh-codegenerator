@@ -1,6 +1,9 @@
 <?wh
+LOADLIB "wh::files.whlib";
 LOADLIB "module::system/configure.whlib";
+LOADLIB "module::system/internal/moduleimexport.whlib";
 LOADLIB "module::tollium/screenbase.whlib";
+LOADLIB "module::publisher/siteprofiles.whlib";
 LOADLIB "relative::../siteprofiles.whlib";
 
 PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
@@ -64,6 +67,10 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                                             ]
                                ]
                               ];
+    }
+    ELSE IF ("create" IN data.params)
+    {
+      this->DoCreateTemplate();
     }
   }
 
@@ -213,6 +220,21 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     SetRegistryKey(-1, "codegenerator.siteprofiles.settings", EncodeHSON(settings));
     work->Finish();
   }
+
+  MACRO DoCreateTemplate()
+  {
+    OBJECT scr := this->LoadScreen(".createtemplate", [ libcode := this->libcode->value
+                                                      , wittycode := this->wittycode->value
+                                                      , siteprlcode := this->siteprlcode->value
+                                                      , tag := this->lib->value
+                                                      ]);
+
+    scr->RunModal();
+
+    scr->LoadScreen(".templatecreated", [ add_js := scr->add_js
+                                        , add_siteprl := scr->add_siteprl
+                                        ])->RunModal();
+  }
 >;
 
 PUBLIC OBJECTTYPE EditMember EXTEND TolliumScreenBase
@@ -262,3 +284,153 @@ PUBLIC OBJECTTYPE EditArrayMember EXTEND TolliumScreenBase
   }
 >;
 
+PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
+<
+  RECORD ARRAY sitedesigns;
+  STRING libcode;
+  STRING tag;
+  STRING wittycode;
+  STRING siteprlcode;
+
+  PUBLIC STRING add_js;
+  PUBLIC STRING add_siteprl;
+
+  MACRO Init(RECORD data)
+  {
+    this->libcode := data.libcode;
+    this->wittycode := data.wittycode;
+    this->siteprlcode := data.siteprlcode;
+    this->tag := data.tag;
+
+    // collect webdesigns
+    // get module name from cell designroot: 'moduleroot::tollium/webdesigns/webinterface/'
+    RECORD ARRAY sitedesigns := SELECT *
+                                     , module := Tokenize(Tokenize(designroot, "::")[1], "/")[0]
+                                  FROM GetAvailableWebDesigns(FALSE);
+
+    RECORD ARRAY modules := SELECT title := name
+                                 , rowkey := name
+                                 , webdesigns := DEFAULT RECORD ARRAY
+                              FROM GetInstalledModulesOverview(FALSE)
+                             WHERE NOT isdeleted
+                                   AND NOT isbuiltin
+                          ORDER BY ToUpperCase(name);
+
+    FOREVERY (RECORD module FROM modules)
+    {
+      modules[#module].webdesigns := SELECT title := Substitute(designroot, "moduleroot::" || COLUMN module || "/", "")
+                                          , rowkey := designroot
+                                       FROM sitedesigns
+                                      WHERE ToUpperCase(COLUMN module) = ToUpperCase(module.rowkey)
+                                   ORDER BY ToUpperCase(title);
+    }
+
+    DELETE FROM modules WHERE length(webdesigns) = 0; // we're not interested in these
+
+    this->module->options := modules;
+
+    this->UpdateExplanation();
+  }
+
+  MACRO UpdateExplanation()
+  {
+    RECORD templatesettings := this->GetTemplateSettings();
+    this->explanation->value := GetTid("codegenerator:createtemplate.explanation", this->tag, templatesettings.web_site_design);
+  }
+
+  MACRO OnModuleChange()
+  {
+    RECORD selected_module := SELECT * FROM this->module->options WHERE tolliumselected;
+
+    this->sitedesign->options := selected_module.webdesigns;
+
+    this->sitedesign->readonly := Length(this->sitedesign->options) = 1;
+
+    this->UpdateExplanation();
+  }
+
+  RECORD FUNCTION GetTemplateSettings()
+  {
+    // strip the "webdesigns/SITEDESIGN" part from "moduleroot::MODULE/webdesigns/SITEDESIGN/"
+    STRING web_site_design := Substitute(this->sitedesign->value, "moduleroot::" || this->module->value || "/", "");
+
+    // get the sitedesign path (the folder containing the siteprl, package.json, etc)
+    RETURN [ web_site_design := web_site_design
+           , sitedesign_path := GetModuleInstallationRoot(this->module->value) || web_site_design
+           ];
+  }
+
+  BOOLEAN FUNCTION Submit()
+  {
+    RECORD settings := this->GetTemplateSettings();
+
+    // 1) create a folder 'TAG' in src/pages/
+    STRING newfolderpath := settings.sitedesign_path || "pages/" || this->tag || "/";
+    CreateDiskDirectory(newfolderpath, TRUE);
+
+    // 2) create WHLIB, Witty, SCSS and JS (.es) files in the new folder
+    // 2a) WHLIB
+    STRING whlib := this->libcode;
+    INTEGER addpagenamepos := SearchSubString(ToUpperCase(whlib), "THIS->ISINDEX := WEBDESIGN->TARGETFOLDER->INDEXDOC = WEBDESIGN->TARGETOBJECT->ID");
+    IF (addpagenamepos > -1)
+    {
+      whlib := Left(whlib, addpagenamepos)
+            || 'INSERT "page-' || this->tag || '" INTO webdesign->htmlclasses AT END;\n\n    '
+            || SubString(whlib, addpagenamepos);
+    }
+
+    CreateDiskFileFromBlob(newfolderpath || this->tag || ".whlib", TRUE, FALSE, StringToBlob(whlib));
+
+    // 2b) Witty
+    CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
+
+    // 2c) SCSS
+    STRING scss := "@import '../../shared/variables';\n"
+                || "@import '../../shared/mixins';\n";
+
+    CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
+
+    // 2d) JS
+    STRING js := "require('./" || this->tag || ".scss');\n"
+              || "\n"
+              || "// dompack\n"
+              || "import * as dompack from 'dompack';\n"
+              || "import { qS, qSA } from 'dompack/extra/qsa';\n"
+              || "\n"
+              || "dompack.onDomReady(() => {\n"
+              || "  if (!document.documentElement.classList.contains('page-" || this->tag || "'))\n"
+              || "    return;\n"
+              || "\n"
+              || "  console.info('page: " || this->tag || "');\n"
+              || "});\n";
+
+    CreateDiskFileFromBlob(newfolderpath || this->tag || ".es", TRUE, FALSE, StringToBlob(js));
+
+    // 2e) site profile
+    STRING siteprl := '<?xml version="1.0" encoding="UTF-8" ?>\n'
+                   || '<siteprofile xmlns="http://www.webhare.net/xmlns/publisher/siteprofile"\n'
+                   || '             xmlns:t="http://www.webhare.net/xmlns/tollium/screens"\n'
+                   || '             xmlns:p="http://www.webhare.net/xmlns/publisher/components"\n'
+                   || '             >\n'
+                   || '\n'
+                   || this->siteprlcode || '\n'
+                   || '\n'
+                   || '</siteprofile>\n';
+
+    CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", TRUE, FALSE, StringToBlob(siteprl));
+
+    this->add_js := "import './pages/" || this->tag || "/" || this->tag || ".es';";
+    this->add_siteprl := '<applysiteprofile fullpath="pages/' || this->tag || '/' || this->tag || '.siteprl" />';
+
+    RETURN TRUE;
+  }
+>;
+
+PUBLIC OBJECTTYPE TemplateCreated EXTEND TolliumScreenBase
+<
+  MACRO Init(RECORD data)
+  {
+    this->add_js->value := data.add_js;
+    this->add_siteprl->value := data.add_siteprl;
+  }
+>;

@@ -1,3 +1,17 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+﻿<?xml version="1.0" encoding="UTF-8" ?>
 <language xmlns="http://www.webhare.net/xmlns/tollium/screens" xml:lang="nl" xmlns:html="http://www.w3.org/1999/xhtml">
+  <textgroup gid="createtemplate">   <!-- createtemplate -->
+    <text tid="explanation">This action will perform these tasks:<br/><br/>1) create a folder '<param p="1"/>' in <param p="2"/>pages/<br/><br/>2) create WHLIB, Witty, SCSS and JS (ES6/7) files in this new folder</text>
+  </textgroup>
+  <textgroup gid="siteprofiles">   <!-- siteprofiles -->
+    <text tid="createtemplate">Create template</text>
+    <text tid="savesettings">Save settings</text>
+    <text tid="screentitle">Screen title</text>
+    <textgroup gid="createtemplate">   <!-- siteprofiles.createtemplate -->
+      <text tid="createtemplate">Create template</text>
+      <text tid="module">Module</text>
+      <text tid="sitedesign">Site design</text>
+      <text tid="templatecreated">Template created</text>
+    </textgroup>
+  </textgroup>
 </language>

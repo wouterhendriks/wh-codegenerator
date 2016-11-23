@@ -2,6 +2,7 @@
 <screens xmlns="http://www.webhare.net/xmlns/tollium/screens"
          xmlns:wrd="http://www.webhare.net/xmlns/wrd/components"
          lib="screens/siteprofiles.whlib"
+         gid="siteprofiles"
          >
 
   <messageboxes gid=".messages">
@@ -10,6 +11,7 @@
   <screen name="main" tid=".screentitle" allowresize="true">
     <actions>
       <action name="savesettings" onexecute="dosavesettings" />
+      <action name="createtemplate" onexecute="docreatetemplate" />
     </actions>
 
     <menus>
@@ -18,9 +20,7 @@
     </menus>
 
     <toolbar name="toolbar">
-      <!--
-      <button title="Statistieken" action="statistics" icon="tollium:reporting/statistics" />
-    -->
+      <button title="Create template" action="createtemplate" icon="tollium:actions/add" />
     </toolbar>
 
     <body>
@@ -32,7 +32,7 @@
               <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
               <text title="" value="(singular)" />
             </line>
-            <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library name" />
+            <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library tag" />
             <line layout="left">
               <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type" onchange="dogeneratecode" value="true" />
             </line>
@@ -86,8 +86,8 @@
     </compositions>
     <body>
       <box title="Settings">
-        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" required="true" />
-        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" />
+        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" />
+        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" required="true" />
         <select composition="row"
                 cellname="type"
                 type="pulldown"
@@ -154,8 +154,8 @@
     </compositions>
     <body>
       <box title="Settings">
-        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" required="true" />
-        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" />
+        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" />
+        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" required="true" />
         <select composition="row"
                 cellname="type"
                 type="pulldown"
@@ -197,6 +197,32 @@
       </tabs>
       <defaultformbuttons buttons="ok cancel" />
     </body>
+  </screen>
+
+  <screen name="createtemplate" allowresize="true" minwidth="500px" gid=".createtemplate">
+    <body>
+      <select name="module" type="pulldown" onchange="onmodulechange" />
+      <select name="sitedesign" type="pulldown" />
+      <hr />
+      <line layout="left">
+        <text name="explanation" title="" />
+      </line>
+    </body>
+    <footer>
+      <defaultformbuttons buttons="ok cancel" />
+    </footer>
+  </screen>
+
+  <screen name="templatecreated" allowresize="true" minwidth="800px" gid=".createtemplate">
+    <body>
+      <text title="" value="Add to your main JavaScript file:" />
+      <textarea enabled="false" name="add_js" width="1pr" height="1x" title="" />
+      <text title="" value="Add to your site profile:" />
+      <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
+    </body>
+    <footer>
+      <defaultformbuttons buttons="close" />
+    </footer>
   </screen>
 
 </screens>
