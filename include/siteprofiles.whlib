@@ -398,7 +398,6 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             //|| '                 title="' || (siteprofmember.title != "" ? siteprofmember.title : '') || '"\n'
             || '                 width="300px"\n'
             || '                 height="300px"\n'
-            || '                 preserveifunchanged="true"\n'
             || '                 allowedactions="all refpoint"\n'
             || '                 errorlabel="' || siteprofmember.title || '"\n'
             || '                 publisher="false"\n'
@@ -526,13 +525,9 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
   STRING ARRAY loadlibs;
 
-  IF (filetype_is_rtd)
-    INSERT 'wh::xml/dom.whlib' INTO loadlibs AT END;
-
   INSERT 'wh::witty.whlib' INTO loadlibs AT END;
 
   loadlibs := loadlibs CONCAT [ 'module::publisher/webdesign.whlib'
-                              , 'module::system/cache.whlib'
                               , 'module::system/database.whlib'
                               , 'module::system/whfs.whlib'
                               ];
@@ -590,7 +585,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   }
   ELSE
   {
-    o := o || '    ' || name_plural || ' := SELECT *\n';
+    o := o || '    ' || name_plural || ' := \n'
+      || '        SELECT *\n';
 
     FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
     {
@@ -598,40 +594,28 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
       {
         CASE "datetime"
         {
-          IF ('wh::datetime.whlib' NOT IN loadlibs)
-            INSERT 'wh::datetime.whlib' INTO loadlibs AT 0;
+          INSERT 'wh::datetime.whlib' INTO loadlibs AT END;
 
           //FIXME: Take 'precision' and 'storeutc' into account
 
-          o := o || AddWhiteSpace(Length('    ' || name_plural || ' := SELECT')-1) || ', ' || siteprofmember.name || ' := FormatDateTime("%d-%m-%Y", ' || siteprofmember.name || ')\n';
+          o := o || AddWhiteSpace(13) || ', ' || siteprofmember.name || ' := FormatDateTime("%d-%m-%Y", ' || siteprofmember.name || ')\n';
+        }
+        CASE "image"
+        {
+          INSERT 'module::system/cache.whlib' INTO loadlibs AT END;
+
+          o := o || AddWhiteSpace(13) || ', ' || siteprofmember.name || ' := WrapCachedImage(' || siteprofmember.name || ', [ method := "fit", setwidth := 300, setheight := 300 ])\n';
         }
       }
     }
 
-    o := o || AddWhiteSpace(Length('    ' || name_plural || ' := SELECT')-4) || 'FROM ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n';
+    o := o || AddWhiteSpace(10) || 'FROM ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n';
   }
 
   o := o || '\n';
 
-  IF (filetype_is_rtd)
-  {
-    o := o || '    // add RTD contents\n'
-           || '    ' || name_plural || ' := rtdtype->EnrichWithBulkData(' || name_plural || ', [ "data" ]);\n'
-           || '\n'
-           || '    // generate a plain text version of the RTD for the overview\n'
-           || '    FOREVERY (RECORD ' || name || ' FROM ' || name_plural || ')\n'
-           || '    {\n'
-           || '      IF (RecordExists(' || name || '.data))\n'
-           || '      {\n'
-           || '        OBJECT doc := MakeXMLDocumentFromHTML(' || name || '.data.htmltext);\n'
-           || '        ' || name_plural || '[#' || name || '].intro := doc->body->textcontent;\n'
-           || '      }\n'
-           || '    }\n'
-           || '\n';
-  }
-
   IF (index_is_rtd)
-    o := o || '    OBJECT indexpagecontents := this->webdesign->MakeRTDFromFile(this->webdesign->targetobject->id);\n\n';
+    o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->targetobject);\n\n';
 
   o := o || '    this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n';
 
@@ -667,6 +651,11 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
   // add <?wh and loadlibs
   STRING startoutput := '<?wh\n';
+  loadlibs :=
+      SELECT AS STRING ARRAY DISTINCT lib
+        FROM ToRecordArray(loadlibs, "lib")
+    ORDER BY lib LIKE "wh*" = FALSE, lib;
+
   FOREVERY (STRING lib FROM loadlibs)
     startoutput := startoutput || 'LOADLIB "' || lib || '";\n';
 
