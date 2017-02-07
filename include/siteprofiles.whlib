@@ -352,8 +352,6 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             //|| '                 rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || (NOT hasrowtypes ? '                 roweditscreen=".edit_' || MakeSingular(GetSiteProfileXMLName(siteprofmember.name)) || '"\n' : '')
             || '                 orderable="true"\n'
-            || '                 rowselect="true"\n'
-            || '                 width="1pr"\n'
             || '                 height="1pr"\n'
             || '                 >\n';
 
