@@ -249,7 +249,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
         xml := xml || GetPropertyEditorElement(siteprofmember, composition_name) || "\n";
 
       if (#box+1 < Length(boxes))
-        xml := xml ||  '      <hr />\n\n';
+        xml := xml || '\n';
     }
   }
 
