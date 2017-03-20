@@ -110,7 +110,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
                    , title := Substitute(this->itemtitle->value, " ", "")
-                   , filetypes := [[ title := this->itemtitle->value ]]
+                   , filetypes := [[ title := this->itemtitle->value, isrtd := FALSE ]]
                    , foldertypes := [[ title := this->itemtitle->value ]]
                    , members := members
                    , lib := this->lib->value
@@ -120,7 +120,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     IF (this->use_rtd->value = TRUE)
     {
       //data.foldertypes := DEFAULT RECORD ARRAY;
-      data.filetypes := DEFAULT RECORD ARRAY;
+      UPDATE data.filetypes SET isrtd := TRUE;
 
       INSERT CELL filetype_is_rtd := TRUE INTO data;
     }
