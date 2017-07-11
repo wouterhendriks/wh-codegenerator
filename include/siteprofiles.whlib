@@ -342,20 +342,13 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       CASE "richdocument"
       {
           xml := xml
-              || '      <rte composition="' || composition_name || '"\n'
-              || '           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-              || '           height="1pr"\n'
-              || '           minwidth="400px"\n'
-              || '           minheight="250px"\n'
-              || '           errorlabel="' || siteprofmember.title || '"\n'
-              || '           tagfilter="b i a-href img ul ol li strike"\n'
-              || (siteprofmember.required ? '           required="true"\n' : '')
-              || '           type="html-block"\n'
-              || '           >\n'
-              || '        <linkhandlers>\n'
-              || '          <p:internallinks />\n'
-              || '        </linkhandlers>\n'
-              || '      </rte>';
+              || '      <richdocument composition="' || composition_name || '"\n'
+              || '                    cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+              || '                    height="1pr"\n'
+              || '                    errorlabel="' || siteprofmember.title || '"\n'
+              || '                    rtdtype="your-rtd-type-url"\n'
+              || (siteprofmember.required ? '                    required="true"\n' : '')
+              || '                    />';
       }
       CASE "array"
       {
@@ -505,7 +498,7 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
     STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(foldertype.title) || 's';
 
     xml := xml
-        || '  <apply>\n'
+        || '  <apply priority="2">\n'
         || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
         || '    <denyfiletype typedef="*" />\n'
         || '    <denyfoldertype typedef="*" />\n'
@@ -583,7 +576,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
          || '    RECORD ARRAY ' || name_plural || ' := \n'
          || '         SELECT id\n'
          || '              , title\n'
-         || '              , link := url\n';
+         || '              , link := indexurl\n';
 
   IF (filetype_is_rtd)
     o := o || '              , intro := ""\n';

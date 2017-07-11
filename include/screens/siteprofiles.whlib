@@ -303,7 +303,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     this->tag := data.tag;
 
     // collect webdesigns
-    // get module name from cell designroot: 'moduleroot::tollium/webdesigns/webinterface/'
+    // get module name from cell designroot: 'mod::tollium/webdesigns/webinterface/'
     RECORD ARRAY sitedesigns := SELECT *
                                      , module := Tokenize(Tokenize(designroot, "::")[1], "/")[0]
                                   FROM GetAvailableWebDesigns(FALSE);
@@ -318,7 +318,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
 
     FOREVERY (RECORD module FROM modules)
     {
-      modules[#module].webdesigns := SELECT title := Substitute(designroot, "moduleroot::" || COLUMN module || "/", "")
+      modules[#module].webdesigns := SELECT title := Substitute(designroot, "mod::" || COLUMN module || "/", "")
                                           , rowkey := designroot
                                        FROM sitedesigns
                                       WHERE ToUpperCase(COLUMN module) = ToUpperCase(module.rowkey)
@@ -351,8 +351,8 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
 
   RECORD FUNCTION GetTemplateSettings()
   {
-    // strip the "webdesigns/SITEDESIGN" part from "moduleroot::MODULE/webdesigns/SITEDESIGN/"
-    STRING web_site_design := Substitute(this->sitedesign->value, "moduleroot::" || this->module->value || "/", "");
+    // strip the "webdesigns/SITEDESIGN" part from "mod::MODULE/webdesigns/SITEDESIGN/"
+    STRING web_site_design := Substitute(this->sitedesign->value, "mod::" || this->module->value || "/", "");
 
     // get the sitedesign path (the folder containing the siteprl, package.json, etc)
     RETURN [ web_site_design := web_site_design
