@@ -9,10 +9,10 @@ LOADLIB "module::system/database.whlib";
 LOADLIB "module::system/whfs.whlib";
 LOADLIB "module::codegenerator/siteprofiles.whlib";
 
-STRING jsonpath := "moduledata::codegenerator/sections_lommers.json"; // path to JSON source file
-STRING baseurl := "http://www.lommers-lederwaren.nl/"; // used in XML namespaces
-STRING sitename := "Lommers Lederwaren"; // used for the 'addfsobjects' option
-STRING lib := "lommers_lederwaren.whlib";
+STRING jsonpath := "moduledata::codegenerator/sections_gb.json"; // path to JSON source file
+STRING baseurl := "http://www.glasvezelbuitenaf.nl/"; // used in XML namespaces
+STRING sitename := "Glasvezel buitenaf"; // used for the 'addfsobjects' option
+STRING lib := "glasvezelbuitenaf.whlib";
 STRING lang := "nl"; // "nl", "en"
 
 RECORD args := ParseArguments(GetConsoleArguments(),
@@ -111,6 +111,7 @@ PUBLIC MACRO AddFilesAndFolders(RECORD section)
                         , title := filetype.title
                         , type := OpenWHFSType(xmlns)->id
                         , publish := TRUE
+                        , isrtd := FALSE
                         ];
 
       IF (RecordExists(SELECT FROM system.fs_objects WHERE parent = root->id AND ToUpperCase(name) = ToUpperCase(newfile.name)))
@@ -168,6 +169,7 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
             {
                 INSERT [ title := section.name
                        , name := GetSiteProfileXMLName(section.name)
+                       , isrtd := FALSE
                        ] INTO filetypes AT END;
             }
             CASE "CHANNEL" // in WebHare terms: a folder with files, where the files have meta data
@@ -176,6 +178,7 @@ RECORD ARRAY FUNCTION GenerateSiteProfileSectionsData(RECORD jsondata)
             {
                 INSERT [ title := section.name
                        , name := GetSiteProfileXMLName(section.name)
+                       , isrtd := FALSE
                        ] INTO filetypes AT END;
 
                 INSERT [ title := section.name
@@ -396,7 +399,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
             {
               IF (TypeID(field.settings.showtime) = TypeID(STRING) OR field.settings.showtime = 0)//date
               {
-                curmember.type := "date";
+                curmember.type := "datetime";
                 curmember.settings := [ datetype := "date" ];
               }
               ELSE IF (field.settings.showtime = 1) //  date/time
@@ -409,7 +412,7 @@ RECORD ARRAY FUNCTION ConvertFieldsToMembers(RECORD ARRAY fields)
                 Abort("Unknown date type: " || field.settings.showtime);
               }
             }
-            CASE "TABLE", "CATEGORIES", "TAGS" // no idea what to do with these
+            CASE "TABLE", "CATEGORIES", "TAGS", "POSITIONSELECT", "AMFORMS_FORM" // no idea what to do with these
             {
               curmember.type := field.type;
               curmember.comments := "No idea what to do with: " || field.type;

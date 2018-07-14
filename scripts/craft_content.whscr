@@ -1,0 +1,334 @@
+<?wh
+LOADLIB "wh::filetypes/csv.whlib";
+LOADLIB "wh::datetime.whlib";
+LOADLIB "wh::files.whlib";
+LOADLIB "module::publisher/contenttypes.whlib";
+LOADLIB "module::publisher/internal/siteprofiles/reader.whlib";
+LOADLIB "module::publisher/siteapi.whlib";
+LOADLIB "module::system/resources.whlib";
+LOADLIB "module::system/database.whlib";
+LOADLIB "module::system/whfs.whlib";
+LOADLIB "module::tollium/rtd/doc.whlib";
+
+OBJECT trans := OpenPrimary();
+trans->BeginWork();
+
+
+/*
+
+// WST HellendoorN: vraag&antwoord
+
+RECORD ARRAY contentrows := GetContent("moduledata::codegenerator/wsth_vraagantwoord.csv");
+
+OBJECT site := OpenSiteByName("WST Hellendoorn - Corporate");
+OBJECT fol := site->OpenByPath("vraag-en-antwoord");
+
+RECORD ARRAY huurders, woningzoekenden;
+
+FOREVERY (RECORD row FROM contentrows)
+{
+  IF (row.ingeschakeld = "Ja" AND row.vraag != "")
+  {
+    STRING answer := GetRTDContentsForSiteProfileMember(row.tekst);
+
+    // remove first <p> and last </p>
+    answer := Substring(answer, 3);
+    answer := Substring(answer, 0, Length(answer)-4);
+
+    data.answer.htmltext := StringToBlob(answer);
+
+//        abort(blobtostring(data.answer.htmltext,-1));
+
+    IF (row.ancestors = "Huurders")
+      INSERT data INTO huurders AT END;
+    ELSE
+      INSERT data INTO woningzoekenden AT END;
+  }
+}
+
+OBJECT faqtype := OpenWHFSType("http://www.wst-hellendoorn.nl/xmlns/filetype/faq-category");
+
+fol->OpenByPath("huurders")->SetInstanceData("http://www.wst-hellendoorn.nl/xmlns/filetype/faq-category", [ questions := huurders ]);
+fol->OpenByPath("woningzoekenden")->SetInstanceData("http://www.wst-hellendoorn.nl/xmlns/filetype/faq-category", [ questions := woningzoekenden ]);
+*/
+
+/*
+
+// Mr Prezident: Blog
+RECORD ARRAY blogitems := GetContent("moduledata::codegenerator/mrp_blog.csv");
+
+OBJECT site := OpenSiteByName("Mr.Prezident - Engels");
+OBJECT folder := site->OpenByPath("news");
+
+OBJECT blogtype := OpenWHFSType("http://www.mrprezident.com/xmlns/filetype/blog");
+OBJECT richdoctype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");
+FOREVERY (RECORD row FROM blogitems)
+{
+  STRING blogtext := GetRTDContentsForSiteProfileMember(row.body);
+
+  OBJECT newfile := folder->CreateFile([ name := row.slug
+                                       , type := blogtype->id
+                                       , description := row."meta description"
+                                       , keywords := row."meta keywords"
+                                       , publish := TRUE
+                                       , title := row.title
+                                       ]);
+
+  BLOB filedata := GetImage('/Users/wouter/Documents/mrprez/uploads/', row."image");
+  IF (Length(filedata) = 0)
+    Abort("Could not find image '" || row."image" || "'");
+
+  blogtype->SetInstanceData(newfile->id
+                          , [ blogbackgroundcolor := row."block background color"
+                            , blogtextcolor := row."block text color"
+                            , blogbody := GetRTDRecordForSiteProfileMember(row.body)
+                            , blogimages := WrapBlob(filedata, row.image)
+                            , blogdate := MakeDateFromText(row."post date")
+                            ]);
+
+  OBJECT richdoc := NEW RichDocument;
+  richdoc->ImportFromHTML(StringToBlob(row.body));
+
+  richdoctype->SetInstanceData(newfile->id, [data := richdoc->ExportAsRecord()]);
+}
+*/
+
+
+/*// Mr Prezident: Clients
+RECORD ARRAY clients := GetContent("moduledata::codegenerator/mrp_clients.csv");
+
+OBJECT site := OpenSiteByName("Mr.Prezident - Shared Resources");
+OBJECT folder := site->OpenByPath("clients");
+OBJECT clienttype := OpenWHFSType("http://www.mrprezident.com/xmlns/filetype/clients");
+FOREVERY (RECORD row FROM clients)
+{
+  BLOB imagefile := GetImage('/Users/wouter/Documents/mrprez/uploads/', row.logo);
+  IF (Length(imagefile) = 0)
+    Abort("Could not find image '" || row."image" || "'");
+
+  RECORD imagefiledata := WrapBlob(imagefile, row.logo);
+
+  OBJECT newfile := folder->CreateFile([ name := GetSafeFileName(row.titel) || imagefiledata.extension
+                                       , publish := TRUE
+                                       , title := row.titel
+                                       , data := imagefile
+                                       ]);
+
+  clienttype->SetInstanceData(newfile->id
+                            , [ clientlink := row.link
+                              ]);
+}
+
+// Mr Prezident: people
+RECORD ARRAY data := GetContent("moduledata::codegenerator/mrp_people.csv");
+OBJECT site := OpenSiteByName("Mr.Prezident - Engels");
+OBJECT file := site->OpenByPath("import/about");
+RECORD instancedata := file->GetInstanceData("http://www.mrprezident.com/xmlns/filetype/about_page");
+
+FOREVERY (RECORD row FROM data)
+{
+  BLOB imagefile, detailimagefile;
+
+  IF (row.image != "")
+  {
+    imagefile := GetImage('/Users/wouter/Documents/mrprez/uploads/', row.image);
+    IF (Length(imagefile) = 0)
+      Abort("Could not find image '" || row.image || "'");
+  }
+
+  IF (row."detail image" != "")
+  {
+    detailimagefile := GetImage('/Users/wouter/Documents/mrprez/uploads/', row."detail image");
+    IF (Length(imagefile) = 0)
+      Abort("Could not find detail image '" || row."detail image" || "'");
+  }
+
+  RECORD imagefiledata := WrapBlob(imagefile, row.image);
+  RECORD detailimagefiledata := WrapBlob(detailimagefile, row."detail image");
+
+  BOOLEAN is_vacancy := row.image = "";
+
+  RECORD vacancydescription;
+  IF (is_vacancy)
+  {
+    vacancydescription := GetRTDRecordForSiteProfileMember(row.description2, FALSE);
+    ///abort(blobtostring(vacancydescription.htmltext));
+  }
+
+  INSERT [ membertype := is_vacancy ? "vacancy" : "people"
+         , name := is_vacancy ? row.name2 : row.name1
+         , description := row.description1
+         , detailimage := detailimagefiledata
+         , image := imagefiledata
+         , vacancydescription := vacancydescription
+         ] INTO instancedata.people_vacancies AT END;
+
+  file->SetInstanceData("http://www.mrprezident.com/xmlns/filetype/about_page", instancedata);
+}
+
+trans->CommitWork();
+
+
+*/
+
+
+// Koopman Vastgoed: projects
+RECORD ARRAY data := GetContent("moduledata::codegenerator/koopman_vastgoed_projects.csv");
+OBJECT site := OpenSiteByName("Koopman Vastgoed");
+OBJECT folder := site->OpenByPath("projecten");
+
+OBJECT projecttype := OpenWHFSType("http://www.koopmanvastgoed.nl/xmlns/filetype/project");
+FOREVERY (RECORD row FROM data)
+{
+  STRING blogtext := GetRTDContentsForSiteProfileMember(row.tekst);
+
+  OBJECT newfile := folder->CreateFile([ name := row.slug
+                                       , type := projecttype->id
+                                       , description := row."meta description"
+                                       , keywords := row."meta keywords"
+                                       , publish := row.ingeschakeld = "Ja"
+                                       , title := row."naam project"
+                                       , ordering := #row+1
+                                       ]);
+
+  STRING ARRAY photos := Tokenize(row."foto's", ",");
+
+  RECORD ARRAY images;
+  FOREVERY (STRING photofilename FROM photos)
+  {
+    STRING filename := TrimWhiteSpace(photofilename);
+    BLOB filedata := GetImage('/Users/wouter/Downloads/koopman_vastgoed_fotos/projecten/', filename);
+    IF (Length(filedata) = 0)
+      Abort("Could not find image '" || filename || "'");
+
+    INSERT [ image := WrapBlob(filedata, filename) ] INTO images AT END;
+  }
+
+  projecttype->SetInstanceData(newfile->id
+                          , [ type := row.locatie
+                            , long_description := GetRTDRecordForSiteProfileMember(row.tekst, TRUE)
+                            , images := images
+                            ]);
+
+  //OBJECT richdoc := NEW RichDocument;
+  //richdoc->ImportFromHTML(StringToBlob(row.body));
+
+  //richdoctype->SetInstanceData(newfile->id, [data := richdoc->ExportAsRecord()]);
+}
+
+trans->CommitWork();
+
+
+
+
+
+
+
+
+
+
+// --------------------------------------------------------------------------------------------------------
+
+RECORD ARRAY FUNCTION GetContent(STRING csvpath)
+{
+  BLOB craftjson := GetWebhareResource(csvpath);
+
+  STRING data := BlobToString(craftjson,-1);
+
+  RECORD ARRAY exportrows := ExcelTextParser(data,",","",TRUE);
+
+  exportrows := TokenArrayParser(exportrows[0].tokens, ArraySlice(exportrows,1));
+
+  RETURN exportrows;
+}
+
+STRING FUNCTION GetFriendlyName(STRING txt)
+{
+    txt := Substitute(txt, "_", "-");
+    txt := Substitute(txt, " ", "-");
+    txt := ToLowerCase(GetSafeFileName(txt));
+    RETURN txt;
+}
+
+MACRO SetRTDContent(INTEGER fileid, STRING sourcehtml)
+{
+  OBJECT richdoctype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");
+
+  OBJECT richdoc := NEW RichDocument;
+  richdoc->ImportFromHTML(StringToBlob(sourcehtml));
+
+  richdoctype->SetInstanceData(fileid, [data := richdoc->ExportAsRecord()]);
+}
+
+RECORD FUNCTION GetRTDRecordForSiteProfileMember(STRING sourcehtml, BOOLEAN strip_paragraphs)
+{
+  OBJECT rd := NEW RichDocument;
+  rd->ImportFromHTML(StringToBlob(sourcehtml));
+
+  RECORD rddata := rd->ExportAsRecord();
+
+  STRING text := BlobToString(rddata.htmltext);
+
+  // remove HTML stuff
+  text := Substitute(text, '<html>', '');
+  text := Substitute(text, '</html>', '');
+  text := Substitute(text, '<body>', '');
+  text := Substitute(text, '</body>', '');
+
+  IF (strip_paragraphs)
+  {
+    // remove first <p> and last </p>
+    text := Substring(text, 3);
+    text := Substring(text, 0, Length(text)-4);
+  }
+
+  rddata.htmltext := StringToBlob(text);
+
+  RETURN rddata;
+}
+
+STRING FUNCTION GetRTDContentsForSiteProfileMember(STRING sourcehtml)
+{
+  OBJECT rd := NEW RichDocument;
+  rd->ImportFromHTML(StringToBlob(sourcehtml));
+
+  RECORD rddata := rd->ExportAsRecord();
+
+  STRING text := BlobToString(rddata.htmltext);
+
+  // remove HTML stuff
+  text := Substitute(text, '<html>', '');
+  text := Substitute(text, '</html>', '');
+  text := Substitute(text, '<body>', '');
+  text := Substitute(text, '</body>', '');
+
+  RETURN text;
+}
+
+BLOB FUNCTION GetImage(STRING folder, STRING imagefilename)
+{
+  IF (Right(folder, 1) != "/")
+    folder := folder || "/";
+
+  STRING ARRAY try_filenames := [ imagefilename
+                                , imagefilename || ".jpg"
+                                , imagefilename || ".png"
+                                , imagefilename || ".gif"
+                                ];
+
+  FOREVERY (STRING filename FROM try_filenames)
+  {
+    INSERT GetSafeFileName(filename) INTO try_filenames AT END;
+    INSERT Substitute(GetSafeFileName(filename), "-", "_") INTO try_filenames AT END;
+  }
+
+  FOREVERY (STRING filename FROM try_filenames)
+  {
+    BLOB filedata := MakeBlobFromDiskFile(folder || filename);
+    print(folder || filename || '\n');
+    IF (Length(filedata) > 0)
+      RETURN filedata;
+  }
+
+  RETURN DEFAULT BLOB;
+}

@@ -12,6 +12,7 @@
     <actions>
       <action name="savesettings" onexecute="dosavesettings" />
       <action name="createtemplate" onexecute="docreatetemplate" />
+      <action name="createembeddedobjectfolder" onexecute="docreateembeddedobjectfolder" />
     </actions>
 
     <menus>
@@ -21,30 +22,40 @@
 
     <toolbar name="toolbar">
       <button title="Create template" action="createtemplate" icon="tollium:actions/add" />
+      <button title="Create embedded object" action="createembeddedobjectfolder" icon="tollium:actions/add" />
     </toolbar>
 
     <body>
       <split type="horizontal">
         <part width="1pr" marginright="5px">
           <box title="Settings">
-            <textedit name="baseurl" width="1pr" validationchecks="url" onchange="dogeneratecode" title="Base URL" />
             <line>
-              <textedit name="itemtitle" width="1pr" onchange="dogeneratecode" title="Object title" />
+              <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
+              <text title="" value="(end with /)" />
+            </line>
+            <line>
+              <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title" />
               <text title="" value="(singular)" />
             </line>
-            <textedit name="lib" width="1pr" onchange="dogeneratecode" title="Library tag" />
+            <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
             <line layout="left">
-              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type" onchange="dogeneratecode" value="true" />
+              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type" onchange="onanychange" value="true" />
             </line>
             <line layout="left">
-              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file" onchange="dogeneratecode" value="true" />
+              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file" onchange="onanychange" value="true" />
+            </line>
+            <line layout="left">
+              <checkbox name="use_tids" title="" label="Use gids and tids" onchange="onanychange" value="true" />
+            </line>
+            <line layout="left">
+              <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type" onchange="onanychange" value="true" />
             </line>
           </box>
           <box height="1pr" title="Members">
             <arrayedit name="members"
                        height="1pr"
                        roweditscreen=".editmember"
-                       onchange="dogeneratecode"
+                       onchange="onanychange"
                        orderable="true"
                        >
               <column type="text" name="title" title="Title" />
@@ -57,6 +68,19 @@
         </part>
         <part width="2pr">
           <tabs height="1pr">
+            <tab title="Embedded object">
+              <tabs height="1pr">
+                <tab title="Site profile (.siteprl)">
+                  <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+                <tab title="Library (.whlib)">
+                  <codeedit name="emb_libcode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+                <tab title="Template (.witty)">
+                  <codeedit name="emb_wittycode" width="1pr" height="1pr" enabled="false" />
+                </tab>
+              </tabs>
+            </tab>
             <tab title="Object scaffolding">
               <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
               <tabs height="1pr">
@@ -90,7 +114,7 @@
         <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" required="true" />
         <select composition="row"
                 cellname="type"
-                type="pulldown"
+                type="radio"
                 name="type"
                 title="Type"
                 flags="showarray showdatetime"
@@ -99,6 +123,7 @@
           <option rowkey="boolean" title="Boolean" />
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
+          <option rowkey="intextlink" title="Intextlink" />
           <option rowkey="richdocument" title="Rich text (RTE)" />
           <option rowkey="string" title="String" />
           <option rowkey="textarea" title="Textarea" />
@@ -158,7 +183,7 @@
         <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" required="true" />
         <select composition="row"
                 cellname="type"
-                type="pulldown"
+                type="radio"
                 name="type"
                 title="Type"
                 flags="showdatetime"
@@ -166,6 +191,7 @@
           <option rowkey="boolean" title="Boolean" />
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
+          <option rowkey="intextlink" title="Intextlink" />
           <option rowkey="richdocument" title="Rich text (RTE)" />
           <option rowkey="string" title="String" />
           <option rowkey="textarea" title="Textarea" />
@@ -202,7 +228,7 @@
   <screen name="createtemplate" allowresize="true" minwidth="500px" gid=".createtemplate">
     <body>
       <select name="module" type="pulldown" onchange="onmodulechange" />
-      <select name="sitedesign" type="pulldown" />
+      <select name="sitedesign" type="pulldown" onchange="onmodulechange" />
       <hr />
       <line layout="left">
         <text name="explanation" title="" />
@@ -219,6 +245,34 @@
       <textarea enabled="false" name="add_js" width="1pr" height="1x" title="" />
       <text title="" value="Add to your site profile:" />
       <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
+    </body>
+    <footer>
+      <defaultformbuttons buttons="close" />
+    </footer>
+  </screen>
+
+  <screen name="createembeddedobjectfolder" allowresize="true" minwidth="500px">
+    <body>
+      <select name="module" type="pulldown" onchange="onmodulechange" title="Module" />
+      <select name="sitedesign" type="pulldown" onchange="onmodulechange" title="Site design" />
+      <hr />
+      <line layout="left">
+        <text name="explanation" title="" />
+      </line>
+    </body>
+    <footer>
+      <defaultformbuttons buttons="ok cancel" />
+    </footer>
+  </screen>
+
+  <screen name="templatecreatedembobj" allowresize="true" minwidth="800px" title="Embedded object created">
+    <body>
+      <text title="" value="Add to your embeddedobjects.es:" />
+      <textarea enabled="false" name="add_js" width="1pr" height="1x" title="" />
+      <text title="" value="Add to your embeddedobjects.siteprl:" />
+      <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
+      <text title="" value="Add to your main &lt;rtdtype&gt;:" />
+      <textarea name="add_rtdtype" width="1pr" height="1x" enabled="false" title="" />
     </body>
     <footer>
       <defaultformbuttons buttons="close" />
