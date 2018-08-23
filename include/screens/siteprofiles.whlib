@@ -407,7 +407,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
 
     // 2c) SCSS
-    STRING scss := "@import '../../shared/helper';\n";
+    STRING scss := "@import '../../shared/css/functions';\n";
 
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
 
@@ -507,8 +507,16 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     RECORD ARRAY embeddedobjectscontents := ReadDiskDirectory(settings.sitedesign_path || "embeddedobjects/", "*");
     IF (Length(embeddedobjectscontents) = 0) // FIXME: better way to check if a folder exists?
     {
-      work->AddError(`Directory '${settings.sitedesign_path}embeddedobjects/' doesn't seem to exist (please add a file if it's empty)`);
-      RETURN work->Finish();
+      TRY
+      {
+        CreateDiskDirectory(settings.sitedesign_path || "embeddedobjects", TRUE);
+      }
+      CATCH (OBJECT e)
+      {
+        work->AddError(e->what);
+        RETURN work->Finish();
+      }
+      //work->AddError(`Directory '${settings.sitedesign_path}embeddedobjects/' doesn't seem to exist (please add a file if it's empty)`);
     }
 
     // 1) create a folder 'TAG' in src/embeddedobjects/
@@ -532,7 +540,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
 
     // 2c) SCSS
     STRING scss :=
-`//@import '../../shared/helper';
+`//@import '../../shared/css/functions';
 
 .emb-${this->tag} {
 
@@ -554,7 +562,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     // 2e) site profile
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", TRUE, FALSE, StringToBlob(this->siteprlcode));
 
-    this->add_js := "import './" || this->tag || "/" || this->tag || ".es';";
+    this->add_js := "import './" || this->tag || "/" || this->tag || "';";
     this->add_siteprl := '<applysiteprofile fullpath="' || this->tag || '/' || this->tag || '.siteprl" />';
 
     RETURN work->Finish();

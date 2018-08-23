@@ -22,7 +22,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   {
     o := o ||
 `  <rtdtype namespace="${baseurl}rtd/${siteprofilesection.name}">
-    <!-- <css path="../../shared/rtd.css" /> -->
+    <css path="../../shared/css/rtd.css" />
     <blockstyles defaultstyle="NORMAL">
       <textstyle tag="NORMAL" textstyles="b i a-href sup sub strike" />
     </blockstyles>
@@ -844,7 +844,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
     o := o ||
 `
   <rtdtype namespace="${baseurl}rtd/${name}">
-    <!-- <css path="../../shared/rtd.css" /> -->
+    <css path="../../shared/css/rtd.css" />
     <blockstyles defaultstyle="NORMAL">
       <textstyle tag="NORMAL" textstyles="b i a-href sup sub strike" />
     </blockstyles>

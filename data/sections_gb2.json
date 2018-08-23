@@ -1,0 +1,1323 @@
+{
+  "assets": [],
+  "categories": [],
+  "fields": {
+    "Aanbieders": {
+      "contractorInfo": {
+        "name": "Aanbieder Informatie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RichText",
+        "settings": {
+          "configFile": "",
+          "cleanupHtml": 1,
+          "purifyHtml": "",
+          "columnType": "text"
+        }
+      },
+      "contractorLogo": {
+        "name": "Aanbieder logo",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": 1,
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 4,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Logo toevoegen"
+        }
+      },
+      "contractorLink": {
+        "name": "Aanbiederslink",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "http://www.google.nl",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "linkPerArea": {
+        "name": "Aanbiederslink per deelgebied",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "areaLink": {
+            "name": "Deelgebied Link",
+            "fields": {
+              "deelgebied": {
+                "name": "Deelgebied",
+                "required": 1,
+                "translatable": 0,
+                "type": "Categories",
+                "instructions": ""
+              },
+              "specificLink": {
+                "name": "Link naar specifieke pagina",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              }
+            }
+          }
+        }
+      },
+      "contractorOption": {
+        "name": "Aanbod",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "Vastrecht",
+              "value": "Vastrecht",
+              "default": ""
+            },
+            {
+              "label": "Aanbieder",
+              "value": "Aanbieder",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "contractorType": {
+        "name": "Type",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "Particulier",
+              "value": "Particulier",
+              "default": ""
+            },
+            {
+              "label": "Bedrijven",
+              "value": "Bedrijven",
+              "default": ""
+            }
+          ]
+        }
+      }
+    },
+    "Agenda": {
+      "presentationDate": {
+        "name": "Datum",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Date",
+        "settings": {
+          "minuteIncrement": 30,
+          "showDate": 1,
+          "showTime": 0
+        }
+      }
+    },
+    "Categorieën": {
+      "subscribeBefore": {
+        "name": "Aanmelden voor:",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Date",
+        "settings": {
+          "minuteIncrement": 30,
+          "showDate": 1,
+          "showTime": 0
+        }
+      },
+      "amountSubscribed": {
+        "name": "Aantal aanmeldingen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 0
+        }
+      },
+      "amountNeeded": {
+        "name": "Aantal benodigde aanmeldingen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 0
+        }
+      },
+      "algemeneVoorwaarden": {
+        "name": "Algemene voorwaarden",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "pdf"
+          ],
+          "limit": 1,
+          "viewMode": "list",
+          "selectionLabel": ""
+        }
+      },
+      "cifArea": {
+        "name": "CIF gebied",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "ctaSliderText": {
+        "name": "CTA slider tekst",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "addressInformation": {
+        "name": "Deelgebied adresgegevens",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": 1
+        },
+        "blockTypes": {
+          "adresGegevens": {
+            "name": "Adres Gegevens",
+            "fields": {
+              "correspondentieadres": {
+                "name": "Correspondentieadres",
+                "required": 1,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "openingstijden": {
+                "name": "Openingstijden",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "telefoonnummer": {
+                "name": "Telefoonnummer",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "eMailadres": {
+                "name": "E-mailadres",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              }
+            }
+          }
+        }
+      },
+      "deelgebiedId": {
+        "name": "Deelgebied id",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "logo": {
+        "name": "Deelgebied logo",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": 1,
+          "sources": "",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 7,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Logo toevoegen"
+        }
+      },
+      "areaStatus": {
+        "name": "Deelgemeente status",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "In uitvoering",
+              "value": "in_progress",
+              "default": 1
+            },
+            {
+              "label": "Gehaald",
+              "value": "passed",
+              "default": ""
+            },
+            {
+              "label": "Niet gehaald",
+              "value": "failed",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "final": {
+        "name": "Definitief",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "endDate": {
+        "name": "Einddatum",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Date",
+        "settings": {
+          "minuteIncrement": 30,
+          "showDate": 1,
+          "showTime": 0
+        }
+      },
+      "locatieOpDeKaart": {
+        "name": "Locatie op de kaart",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "GoogleMaps_GoogleMap",
+        "settings": {
+          "defaultMapCenter": "52.4091256,6.742923700000006",
+          "defaultMapZoom": 11,
+          "defaultMapWidth": "100%",
+          "defaultMapHeight": "600px",
+          "displayButtons": [
+            "polygons"
+          ],
+          "addressFields": ""
+        }
+      },
+      "subscribeUrl": {
+        "name": "Nieuwsbrief url",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "showProgressBar": {
+        "name": "Toon voortgangscounter",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "totalAddress": {
+        "name": "Totaal aantal adressen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 0
+        }
+      },
+      "explanationArea": {
+        "name": "Uitleg behaald / niet behaald / Nog niet definitief",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RichText",
+        "settings": {
+          "configFile": "",
+          "availableAssetSources": "*",
+          "availableTransforms": "*",
+          "cleanupHtml": 1,
+          "purifyHtml": "",
+          "columnType": "text"
+        }
+      }
+    },
+    "Contactpersonen": {
+      "emailAddress": {
+        "name": "E-mail",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "functie": {
+        "name": "Functie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "phone": {
+        "name": "Telefoonnummer",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "website": {
+        "name": "Website",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    },
+    "FAQ": {
+      "categorie": {
+        "name": "Categorie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Categories",
+        "settings": {
+          "source": "group:1",
+          "limit": 1,
+          "selectionLabel": "Categorie toevoegen"
+        }
+      }
+    },
+    "Globalen": {
+      "address": {
+        "name": "Correspondentieadres",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "email": {
+        "name": "E-mailadres",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "facebookUrl": {
+        "name": "Facebook",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "openingHours": {
+        "name": "Openingstijden",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "phoneNumber": {
+        "name": "Telefoonnummer",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "twitterUrl": {
+        "name": "Twitter",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    },
+    "Meldingen": {
+      "melding": {
+        "name": "Melding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RichText",
+        "settings": {
+          "configFile": "",
+          "availableAssetSources": "*",
+          "availableTransforms": "*",
+          "cleanupHtml": 1,
+          "purifyHtml": "",
+          "columnType": "text"
+        }
+      },
+      "meldingscode": {
+        "name": "Meldingscode",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "toonAanmeldenAanbieders": {
+        "name": "Toon aanmelden aanbieders",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "toonAanmeldenNieuwsbrief": {
+        "name": "Toon aanmelden nieuwsbrief",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "toonPostcodeChecker": {
+        "name": "Toon postcode checker",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      }
+    },
+    "Nieuws": {
+      "newsMainImage": {
+        "name": "Hoofdafbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 3,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 6,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Hoofdafbeelding toevoegen"
+        }
+      }
+    },
+    "Postcodes": {
+      "postalCodeArea": {
+        "name": "Deelgemeente",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 0
+        }
+      },
+      "houseNo": {
+        "name": "Huisnummer",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 0
+        }
+      },
+      "roomNumber": {
+        "name": "Kamernummer",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "remark": {
+        "name": "Opmerking",
+        "context": "global",
+        "instructions": "Uitleg hoe en wat verder.",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": 1,
+          "initialRows": 4
+        }
+      },
+      "postcodeMelding": {
+        "name": "Postcode melding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "projectFase": {
+        "name": "Project fase",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "fiberPossible": {
+        "name": "Status",
+        "context": "global",
+        "instructions": "Is glasvezel op deze postcode mogelijk?",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": 1
+        }
+      },
+      "statusOntwerp": {
+        "name": "Status ontwerp",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "houseNoSuffix": {
+        "name": "Toevoeging",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    },
+    "Quotes": {
+      "sender": {
+        "name": "Afzender",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "quote": {
+        "name": "Quote",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": 1,
+          "initialRows": 4
+        }
+      },
+      "quoteImage": {
+        "name": "Quote Afbeelding",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": 1,
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Quote afbeelding toevoegen"
+        }
+      }
+    },
+    "Resellers": {
+      "resellerAddress": {
+        "name": "Reseller adresgegevens",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": 1
+        },
+        "blockTypes": {
+          "addressData": {
+            "name": "Adres gegevens",
+            "fields": {
+              "phonenumber": {
+                "name": "Telefoonnummer",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "street": {
+                "name": "Straatnaam",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "postalCode": {
+                "name": "Postcode",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              },
+              "city": {
+                "name": "Plaats",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              }
+            }
+          }
+        }
+      },
+      "resellerArea": {
+        "name": "Reseller deelgebied",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Categories",
+        "settings": {
+          "source": "group:2",
+          "limit": "",
+          "selectionLabel": "Deelgebied toevoegen"
+        }
+      },
+      "resellerInformation": {
+        "name": "Reseller informatie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RichText",
+        "settings": {
+          "configFile": "",
+          "cleanupHtml": 1,
+          "purifyHtml": "",
+          "columnType": "text"
+        }
+      },
+      "resellerLogo": {
+        "name": "Reseller logo",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Reseller logo toevoegen"
+        }
+      },
+      "resellerWebsite": {
+        "name": "Reseller website",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      }
+    },
+    "Standaard": {
+      "body": {
+        "name": "Body",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "RichText",
+        "settings": {
+          "configFile": "Standard.json"
+        }
+      },
+      "contactAlgemeen": {
+        "name": "Contact algemeen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RichText",
+        "settings": {
+          "configFile": "",
+          "availableAssetSources": "*",
+          "availableTransforms": "*",
+          "cleanupHtml": 1,
+          "purifyHtml": "",
+          "columnType": "text"
+        }
+      },
+      "area": {
+        "name": "Deelgebied",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Categories",
+        "settings": {
+          "source": "group:2",
+          "limit": "",
+          "selectionLabel": "Deelgebied toevoegen"
+        }
+      },
+      "areaContents": {
+        "name": "Deelgebied specifieke content",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "areaContent": {
+            "name": "Deelgebied content",
+            "fields": {
+              "area": {
+                "name": "Deelgebied",
+                "required": 1,
+                "translatable": 0,
+                "type": "Categories",
+                "instructions": ""
+              },
+              "areaSpecificContent": {
+                "name": "Deelgebied specifieke content",
+                "required": 1,
+                "translatable": 0,
+                "type": "RichText",
+                "instructions": ""
+              }
+            }
+          }
+        }
+      },
+      "dynamicContent": {
+        "name": "Dynamische content",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "text": {
+            "name": "Tekst",
+            "fields": {
+              "entryContent": {
+                "name": "Text",
+                "required": 0,
+                "translatable": 0,
+                "type": "RichText",
+                "instructions": ""
+              }
+            }
+          },
+          "images": {
+            "name": "Afbeelding",
+            "fields": {
+              "image": {
+                "name": "afbeelding",
+                "required": 0,
+                "translatable": 0,
+                "type": "Assets",
+                "instructions": ""
+              }
+            }
+          },
+          "quote": {
+            "name": "Quote",
+            "fields": {
+              "quote": {
+                "name": "Quote",
+                "required": 0,
+                "translatable": 0,
+                "type": "Entries",
+                "instructions": ""
+              }
+            }
+          },
+          "video": {
+            "name": "Video",
+            "fields": {
+              "videoUrl": {
+                "name": "Video url",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              }
+            }
+          },
+          "iframe": {
+            "name": "iFrame",
+            "fields": {
+              "iframeurl": {
+                "name": "iFrameurl",
+                "required": 0,
+                "translatable": 0,
+                "type": "PlainText",
+                "instructions": ""
+              }
+            }
+          },
+          "mixedContent": {
+            "name": "Afbeelding & tekst",
+            "fields": {
+              "mixedText": {
+                "name": "Tekst",
+                "required": 0,
+                "translatable": 0,
+                "type": "RichText",
+                "instructions": ""
+              },
+              "mixedImage": {
+                "name": "Afbeelding",
+                "required": 0,
+                "translatable": 0,
+                "type": "Assets",
+                "instructions": ""
+              },
+              "mixedImagePosition": {
+                "name": "Positie afbeelding",
+                "required": 0,
+                "translatable": 0,
+                "type": "PositionSelect",
+                "instructions": ""
+              }
+            }
+          }
+        }
+      },
+      "form": {
+        "name": "Formulier",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "AmForms_Form",
+        "settings": {
+          "source": "*",
+          "limit": 1,
+          "selectionLabel": ""
+        }
+      },
+      "heroLandingspage": {
+        "name": "Hero Landingspage",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 5,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Bestand toevoegen"
+        }
+      },
+      "heroNieuwsbrief": {
+        "name": "Hero Nieuwsbrief",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 5,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Bestand toevoegen"
+        }
+      },
+      "heroVoordelen": {
+        "name": "Hero Voordelen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 5,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Bestand toevoegen"
+        }
+      },
+      "introduction": {
+        "name": "Introductie",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "",
+          "maxLength": "",
+          "multiline": 1,
+          "initialRows": 4
+        }
+      },
+      "keuzehulp": {
+        "name": "Keuzehulp",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Table",
+        "settings": {
+          "columns": {
+            "col1": {
+              "heading": "Type aansluiting",
+              "handle": "typeAansluiting",
+              "width": "",
+              "type": "singleline"
+            },
+            "col2": {
+              "heading": "Aanbieder",
+              "handle": "aanbieder",
+              "width": "",
+              "type": "singleline"
+            },
+            "col3": {
+              "heading": "Vastrecht p/m",
+              "handle": "vastrechtPM",
+              "width": "",
+              "type": "singleline"
+            },
+            "col4": {
+              "heading": "Alles in 1",
+              "handle": "allesIn1",
+              "width": "",
+              "type": "checkbox"
+            },
+            "col5": {
+              "heading": "Maandbedrag",
+              "handle": "maandbedrag",
+              "width": "",
+              "type": "singleline"
+            }
+          },
+          "defaults": {
+            "row1": {
+              "col1": "",
+              "col2": "",
+              "col3": "",
+              "col4": "",
+              "col5": ""
+            }
+          }
+        }
+      },
+      "heading": {
+        "name": "Kop",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "PlainText",
+        "settings": null
+      },
+      "multipleImages": {
+        "name": "Meerdere afbeeldingen",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 6,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": "",
+          "selectionLabel": "Bestand toevoegen"
+        }
+      },
+      "paginaHeader": {
+        "name": "Pagina header",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 5,
+          "defaultUploadLocationSubpath": "",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 1,
+          "selectionLabel": "Bestand toevoegen"
+        }
+      },
+      "slider": {
+        "name": "Slider content",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Entries",
+        "settings": {
+          "sources": [
+            "section:7"
+          ],
+          "limit": "",
+          "selectionLabel": "Quote aan slider toevoegen"
+        }
+      },
+      "tags": {
+        "name": "Tags",
+        "context": "global",
+        "instructions": null,
+        "translatable": 0,
+        "type": "Tags",
+        "settings": {
+          "source": ""
+        }
+      },
+      "conditions": {
+        "name": "Voorwaarden",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      },
+      "websiteInOnderhoud": {
+        "name": "Website in onderhoud",
+        "context": "global",
+        "instructions": "Toont een melding bij het postcode formulier om de gebruiker erop te wijzen dat het systeem vertraagt of niet volledig werkt.",
+        "translatable": 0,
+        "type": "Lightswitch",
+        "settings": {
+          "default": ""
+        }
+      }
+    }
+  },
+  "globals": [],
+  "sections": [],
+  "contenttabs": [],
+  "tags": []
+}

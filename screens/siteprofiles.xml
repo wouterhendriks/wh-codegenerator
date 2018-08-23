@@ -29,10 +29,7 @@
       <split type="horizontal">
         <part width="1pr" marginright="5px">
           <box title="Settings">
-            <line>
-              <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
-              <text title="" value="(end with /)" />
-            </line>
+            <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
             <line>
               <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title" />
               <text title="" value="(singular)" />

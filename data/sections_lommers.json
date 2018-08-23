@@ -1,0 +1,649 @@
+{
+  "assets": [],
+  "categories": [],
+  "fields": {
+    "header": {
+      "headerImage": {
+        "name": "header image",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "/uploads",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": ""
+        }
+      }
+    },
+    "Homepage": {
+      "merken": {
+        "name": "merken",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": "*",
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "/uploads",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "illustrator",
+            "image"
+          ],
+          "limit": ""
+        }
+      }
+    },
+    "product beschrijving": {
+      "afmeting": {
+        "name": "afmeting",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Matrix",
+        "settings": {
+          "maxBlocks": null
+        },
+        "blockTypes": {
+          "afmetingen": {
+            "name": "afmetingen",
+            "fields": {
+              "breedte": {
+                "name": "Breedte",
+                "required": 0,
+                "translatable": 0,
+                "type": "Number"
+              },
+              "diepte": {
+                "name": "Diepte",
+                "required": 0,
+                "translatable": 0,
+                "type": "Number"
+              },
+              "hoogte": {
+                "name": "Hoogte",
+                "required": 0,
+                "translatable": 0,
+                "type": "Number"
+              }
+            }
+          }
+        }
+      },
+      "artikelNummer": {
+        "name": "artikel nummer",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "Vul hier het artikel nummer in",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "beschrijving": {
+        "name": "Beschrijving",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "Geen beschrijving beschikbaar",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "geslacht": {
+        "name": "Geslacht",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "RadioButtons",
+        "settings": {
+          "options": [
+            {
+              "label": "Mannelijk",
+              "value": "Mannelijk",
+              "default": 1
+            },
+            {
+              "label": "Vrouwelijk",
+              "value": "Vrouwelijk",
+              "default": ""
+            },
+            {
+              "label": "Unisex",
+              "value": "Unisex",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "image": {
+        "name": "image",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Assets",
+        "settings": {
+          "useSingleFolder": "",
+          "sources": [
+            "folder:1"
+          ],
+          "defaultUploadLocationSource": 1,
+          "defaultUploadLocationSubpath": "/uploads",
+          "singleUploadLocationSource": 1,
+          "singleUploadLocationSubpath": "",
+          "restrictFiles": 1,
+          "allowedKinds": [
+            "image"
+          ],
+          "limit": 5
+        }
+      },
+      "kleur": {
+        "name": "kleur",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "PlainText",
+        "settings": {
+          "placeholder": "Hier kunt u de kleuren invullen.",
+          "maxLength": "",
+          "multiline": "",
+          "initialRows": 4
+        }
+      },
+      "merk": {
+        "name": "merk",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "Line",
+              "value": "Line",
+              "default": ""
+            },
+            {
+              "label": "Samsonite",
+              "value": "Samsonite",
+              "default": ""
+            },
+            {
+              "label": "Carlton",
+              "value": "Carlton",
+              "default": ""
+            },
+            {
+              "label": "Rimowa",
+              "value": "Rimowa",
+              "default": ""
+            },
+            {
+              "label": "Lief",
+              "value": "Lief",
+              "default": ""
+            },
+            {
+              "label": "byLouLou",
+              "value": "byLouLou",
+              "default": ""
+            },
+            {
+              "label": "Bear",
+              "value": "Bear",
+              "default": ""
+            },
+            {
+              "label": "Secrid",
+              "value": "Secrid",
+              "default": ""
+            },
+            {
+              "label": "Spikes&sparrow",
+              "value": "Spikes&sparrow",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "prijs": {
+        "name": "prijs",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Number",
+        "settings": {
+          "min": 0,
+          "max": "",
+          "decimals": 2
+        }
+      },
+      "producttype": {
+        "name": "producttype",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "Damestassen",
+              "value": "Damestassen",
+              "default": ""
+            },
+            {
+              "label": "Herentassen",
+              "value": "herentassen",
+              "default": ""
+            },
+            {
+              "label": "Schooltassen",
+              "value": "Schooltassen",
+              "default": ""
+            },
+            {
+              "label": "Koffers",
+              "value": "Koffers",
+              "default": ""
+            },
+            {
+              "label": "Business tassen",
+              "value": "business tassen",
+              "default": ""
+            },
+            {
+              "label": "Portomonnees & overige",
+              "value": "Portomonnees & overige",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "soortProduct": {
+        "name": "Soort product",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Dropdown",
+        "settings": {
+          "options": [
+            {
+              "label": "leren damestas",
+              "value": "damestas",
+              "default": ""
+            },
+            {
+              "label": "kunststoffen damestas",
+              "value": "damestas",
+              "default": ""
+            },
+            {
+              "label": "",
+              "value": "",
+              "default": ""
+            },
+            {
+              "label": "avondtasjes en clutches",
+              "value": "damestas",
+              "default": ""
+            },
+            {
+              "label": "laptop trolleys",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "laptoptassen",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "laptopsleeves",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "laptoprugzakken",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "tablet",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "leren businnes",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "kunststof business",
+              "value": "business",
+              "default": ""
+            },
+            {
+              "label": "schrijfmappen",
+              "value": "business",
+              "default": ""
+            }
+          ]
+        }
+      },
+      "specificatie": {
+        "name": "Specificaties",
+        "context": "global",
+        "instructions": "",
+        "translatable": 0,
+        "type": "Table",
+        "settings": {
+          "columns": {
+            "col1": {
+              "heading": "waarden",
+              "handle": "waarden",
+              "width": "",
+              "type": "singleline"
+            }
+          },
+          "defaults": []
+        }
+      }
+    },
+    "Standaard": {
+      "body": {
+        "name": "Body",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "RichText",
+        "settings": {
+          "configFile": "Standard.json"
+        }
+      },
+      "heading": {
+        "name": "Kop",
+        "context": "global",
+        "instructions": null,
+        "translatable": 1,
+        "type": "PlainText",
+        "settings": null
+      },
+      "tags": {
+        "name": "Tags",
+        "context": "global",
+        "instructions": null,
+        "translatable": 0,
+        "type": "Tags",
+        "settings": {
+          "source": "taggroup:1"
+        }
+      }
+    }
+  },
+  "globals": [],
+  "sections": {
+    "categorien": {
+      "name": "categorien",
+      "type": "structure",
+      "hasUrls": 1,
+      "template": "categorien/_entry",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "categorien/{slug}",
+          "nestedUrlFormat": "{parent.uri}/{slug}"
+        }
+      },
+      "entryTypes": {
+        "producten": {
+          "name": "Producten",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "products": {
+                "geslacht": 0,
+                "merk": 0,
+                "image": 0,
+                "beschrijving": 0
+              },
+              "Standaard": {
+                "body": 0,
+                "heading": 0,
+                "tags": 0
+              }
+            }
+          }
+        },
+        "productDetail": {
+          "name": "product-detail",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "fields": []
+          }
+        }
+      }
+    },
+    "header": {
+      "name": "Header",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "header/_entry",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "header",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "header": {
+          "name": "Header",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "header": {
+                "headerImage": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "homepageContent": {
+      "name": "home",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "homepage/_entry",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "home",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "homepageContent": {
+          "name": "home",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Homepage": {
+                "merken": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "homepage": {
+      "name": "index",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "index",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "__home__",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "homepage": {
+          "name": "Homepage ",
+          "hasTitleField": 0,
+          "titleLabel": null,
+          "titleFormat": "{section.name|raw}",
+          "fieldLayout": {
+            "tabs": {
+              "Inhoud": {
+                "headerImage": 0,
+                "heading": 0,
+                "body": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "news": {
+      "name": "Nieuws",
+      "type": "channel",
+      "hasUrls": 1,
+      "template": "news/_entry",
+      "maxLevels": null,
+      "enableVersioning": 0,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 1,
+          "urlFormat": "news/{postDate.year}/{slug}",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "news": {
+          "name": "Nieuws",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "Inhoud": {
+                "body": 1,
+                "tags": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "overOns": {
+      "name": "Over ons",
+      "type": "single",
+      "hasUrls": 1,
+      "template": "over-ons",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "over-ons",
+          "nestedUrlFormat": null
+        }
+      },
+      "entryTypes": {
+        "overOns": {
+          "name": "Over ons",
+          "hasTitleField": 0,
+          "titleLabel": null,
+          "titleFormat": "{section.name|raw}",
+          "fieldLayout": {
+            "tabs": {
+              "Inhoud": {
+                "heading": 0,
+                "body": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    "producten": {
+      "name": "Producten",
+      "type": "structure",
+      "hasUrls": 1,
+      "template": "producten/_entry",
+      "maxLevels": null,
+      "enableVersioning": 1,
+      "locales": {
+        "nl_nl": {
+          "enabledByDefault": 0,
+          "urlFormat": "product/{slug}",
+          "nestedUrlFormat": "{parent.uri}/{slug}"
+        }
+      },
+      "entryTypes": {
+        "product": {
+          "name": "product",
+          "hasTitleField": 1,
+          "titleLabel": "Titel",
+          "titleFormat": null,
+          "fieldLayout": {
+            "tabs": {
+              "product specificaties": {
+                "prijs": 0,
+                "producttype": 0,
+                "soortProduct": 0,
+                "beschrijving": 0,
+                "geslacht": 0,
+                "merk": 0,
+                "image": 0,
+                "specificatie": 0,
+                "afmeting": 0,
+                "artikelNummer": 0,
+                "kleur": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "contenttabs": [],
+  "tags": []
+}
