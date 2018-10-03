@@ -48,12 +48,15 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->use_rtd->value := prefillsettings.use_rtd;
       this->use_tids->value := CellExists(prefillsettings, "use_tids") AND prefillsettings.use_tids;
       this->add_custom_rtdtype->value := CellExists(prefillsettings, "add_custom_rtdtype") AND prefillsettings.add_custom_rtdtype;
+      this->page_only->value := CellExists(prefillsettings, "page_only") AND prefillsettings.page_only;
       this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
 
       this->DoGenerateCode();
     }
 
     this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
+
+    //this->maintabs->selectedtab := this->objectscaffolding;
 
     IF ("debug" IN data.params)
     {
@@ -144,6 +147,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    , screen_only := FALSE
                    , use_tids := this->use_tids->value
                    , add_custom_rtdtype := this->add_custom_rtdtype->value
+                   , page_only := this->page_only->value
                    ];
 
     IF (this->use_rtd->value = TRUE)
@@ -253,6 +257,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                        , use_rtd := this->use_rtd->value
                        , use_tids := this->use_tids->value
                        , add_custom_rtdtype := this->add_custom_rtdtype->value
+                       , page_only := this->page_only->value
                        , index_is_rtd := this->index_is_rtd->value
                        ];
 
@@ -407,7 +412,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
 
     // 2c) SCSS
-    STRING scss := "@import '../../shared/css/functions';\n";
+    STRING scss := "@import '../../shared/css/vars';\n";
 
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
 
@@ -540,7 +545,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
 
     // 2c) SCSS
     STRING scss :=
-`//@import '../../shared/css/functions';
+`//@import '../../shared/css/vars';
 
 .emb-${this->tag} {
 
