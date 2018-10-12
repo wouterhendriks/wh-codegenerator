@@ -56,7 +56,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
 
-    //this->maintabs->selectedtab := this->objectscaffolding;
+    this->maintabs->selectedtab := this->objectscaffolding;
 
     IF ("debug" IN data.params)
     {
@@ -70,6 +70,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                                , type_dt_storeutc := FALSE
                                ]
                               ,[ title := "A boolean", name := "", type := "boolean", required := TRUE, members := DEFAULT RECORD ARRAY ]
+                              ,[ title := "A richarea", name := "", type := "richarea", required := FALSE, members := DEFAULT RECORD ARRAY ]
                               ,[ title := "A richdocument", name := "", type := "richdocument", required := FALSE, members := DEFAULT RECORD ARRAY ]
                               ,[ title := "A whfsref", name := "", type := "whfsref", required := TRUE, members := DEFAULT RECORD ARRAY ]
                               ,[ title := "An array", name := "", type := "array", required := FALSE
@@ -138,7 +139,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     }
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
-                   , title := Substitute(this->itemtitle->value, " ", "")
+                   , title := this->itemtitle->value//Substitute(this->itemtitle->value, " ", "")
                    , originaltitle := this->itemtitle->value
                    , filetypes := [[ title := this->itemtitle->value, isrtd := FALSE ]]
                    , foldertypes := [[ title := this->itemtitle->value ]]
@@ -148,6 +149,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    , use_tids := this->use_tids->value
                    , add_custom_rtdtype := this->add_custom_rtdtype->value
                    , page_only := this->page_only->value
+                   , index_is_rtd := this->index_is_rtd->value
                    ];
 
     IF (this->use_rtd->value = TRUE)
@@ -158,8 +160,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       INSERT CELL filetype_is_rtd := TRUE INTO data;
     }
 
-    IF (this->index_is_rtd->value = TRUE)
-      INSERT CELL index_is_rtd := TRUE INTO data;
+    //IF (this->index_is_rtd->value = TRUE)
+    //  INSERT CELL index_is_rtd := TRUE INTO data;
 
     this->GenerateSiteProfileCode(data);
     this->GenerateLibCode(data);
@@ -412,7 +414,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
 
     // 2c) SCSS
-    STRING scss := "@import '../../shared/css/vars';\n";
+    STRING scss := "// @import '../../shared/css/vars';\n";
 
     CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
 

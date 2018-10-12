@@ -124,7 +124,8 @@
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
           <option rowkey="intextlink" title="Intextlink" />
-          <option rowkey="richdocument" title="Rich text (RTE)" />
+          <option rowkey="richarea" title="Richarea" />
+          <option rowkey="richdocument" title="RTD" />
           <option rowkey="string" title="String" />
           <option rowkey="textarea" title="Textarea" />
           <option rowkey="whfsref" title="WHFS reference (file or folder)" />
@@ -192,7 +193,8 @@
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
           <option rowkey="intextlink" title="Intextlink" />
-          <option rowkey="richdocument" title="Rich text (RTE)" />
+          <option rowkey="richarea" title="Richarea" />
+          <option rowkey="richdocument" title="RTD" />
           <option rowkey="string" title="String" />
           <option rowkey="textarea" title="Textarea" />
           <option rowkey="whfsref" title="WHFS reference (file or folder)" />

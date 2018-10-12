@@ -172,7 +172,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data)
     {
       xml := xml || 'string"';
     }
-    CASE "RICHDOCUMENT"
+    CASE "RICHDOCUMENT","RICHAREA"
     {
       xml := xml || 'richdocument"';
     }
@@ -288,7 +288,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
 
   FOREVERY (RECORD siteprofmember FROM siteprofmembers)
   {
-    IF (siteprofmember.type iN ["image","array","richdocument"]) // own box
+    IF (siteprofmember.type iN ["image","array","richdocument","richarea"]) // own box
       INSERT [ title := siteprofmember.title, name := siteprofmember.name, members := [ siteprofmember ] ] INTO boxes AT END;
     ELSE // default box
       INSERT siteprofmember INTO boxes[0].members AT END;
@@ -397,6 +397,17 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
               || '                    rtdtype="' || (CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype ? `${screenbaseurl}rtd/${screendata.name}` : "your-rtd-type-url") || '"\n'
               || (siteprofmember.required ? '                    required="true"\n' : '')
               || '                    />';
+      }
+      CASE "richarea"
+      {
+          xml := xml
+              || '      <richarea composition="' || composition_name || '"\n'
+              || '                cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+              || '                height="1pr"\n'
+              || '                tagfilter="a-href img b i p ul ol"\n'
+              || '                ' || errorlabel || '\n'
+              || (siteprofmember.required ? '                required="true"\n' : '')
+              || '                />';
       }
       CASE "array"
       {
@@ -572,13 +583,23 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
     }
 
     xml := xml
-          || '  <apply>\n'
-          || '    <to type="file" filetype="' || xmlns_file || '" />\n';
+          || '  <apply>\n';
+
+    IF (siteprofilesection.index_is_rtd)
+      xml := xml ||
+`    <and>
+      <not>
+        <to type="index" parenttype="${xmlns_folder}" />
+      </not>
+      <to type="file" parenttype="${xmlns_folder}" filetype="${xmlns_file}" />
+    </and>
+`;
+    ELSE
+      xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
 
     IF (siteprofilesection.page_only)
     {
-      xml := xml
-          || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.name)}spage" />` || '\n';
+      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.name)}spage" />` || '\n';
     }
 
     IF (filetype_is_rtd)
@@ -694,7 +715,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
     IF (Length(siteprofilesection.members) = 0)
     {
-      o := o || '    ' || name_plural || ' := ' || name || 'type->EnrichWithBulkData(' || name_plural || ', [ ' || memberfields_detokenized || ' ]);\n';
+      o := o || '    ' || name_plural || ' := ' || name || 'type->Enrich(' || name_plural || ', "id", [ ' || memberfields_detokenized || ' ]);\n';
     }
     ELSE
     {
@@ -730,12 +751,12 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     IF (index_is_rtd)
       o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->targetobject);\n\n';
 
-    o := o || '    this->wittydata := [ ' || name_plural || ' := ' || name_plural || '\n';
+    o := o || '    this->wittydata := CELL[ ' || name_plural || '\n';
 
     IF (index_is_rtd)
-      o := o || '                       , body := PTR indexpagecontents->RenderAllObjects()\n';
+      o := o || '                           , body := PTR indexpagecontents->RenderAllObjects()\n';
 
-    o := o || '                       ];\n'
+    o := o || '                           ];\n'
            || '  }\n'
            || '\n'
            || '  MACRO PrepareForDetails()\n'
@@ -744,15 +765,15 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
            || '    RECORD ' || name || 'data := this->webdesign->targetobject->GetInstanceData("' || baseurl || 'filetype/' || name || '");\n'
            || '\n';
 
+    //IF (filetype_is_rtd)
+    //  o := o || '    OBJECT pagecontents := ;\n\n';
+
+    o := o || '    this->wittydata := CELL[ ' || name || 'data\n';
+
     IF (filetype_is_rtd)
-      o := o || '    OBJECT pagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->targetobject->id);\n\n';
+      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->targetobject->id)->RenderAllObjects()\n';
 
-    o := o || '    this->wittydata := [ ' || name || 'data := ' || name || 'data\n';
-
-    IF (filetype_is_rtd)
-      o := o || '                       , body := PTR pagecontents->RenderAllObjects()\n';
-
-    o := o || '                       ];\n'
+    o := o || '                           ];\n'
            || '  }\n';
 
     o := o
@@ -797,42 +818,19 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
 
   filetype_is_rtd := FALSE;
 
-  STRING o := '[component ' || name_plural || 'index]\n';
+  RETURN
+`[component ${name}sindex]
+  <div class="p-${name_plural}">
 
-  IF (index_is_rtd)
-    o := o || '  RTD body: [body]\n\n';
+  </div>
+[/component]
 
-  o := o || '  [forevery ' || name_plural || ']\n';
+[component ${name}details]
+  <div class="p-${name}">
 
-  IF (filetype_is_rtd)
-    o := o || '    Intro: [intro]<br />\n';
-
-  // FIXME: Print stuff based on member type
-  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
-  {
-    o := o || '    ' || siteprofmember.title || ': [' || siteprofmember.name || ']<br />\n'
-           || '    <hr />\n';
-  }
-
-  o := o || '  [/forevery]\n'
-         || '[/component]\n'
-         || '\n';
-
-  o := o || '[component ' || name || 'details]\n';
-
-  IF (filetype_is_rtd)
-  {
-    o := o || '  RTD body: [body]<br />\n';
-  }
-
-  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
-  {
-    o := o || '  ' || siteprofmember.title || ': [' || name || 'data.' || siteprofmember.name || ']<br />\n';
-  }
-
-  o := o || '[/component]\n';
-
-  RETURN o;
+  </div>
+[/component]
+`;
 }
 
 STRING FUNCTION AddWhiteSpace(INTEGER numspaces)

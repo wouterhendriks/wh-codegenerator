@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <language xmlns="http://www.webhare.net/xmlns/tollium/screens" xml:lang="nl" xmlns:html="http://www.w3.org/1999/xhtml">
   <textgroup gid="createembeddedobjectfolder">   <!-- createembeddedobjectfolder -->
     <text tid="explanation">This action will perform these tasks:<br/><br/>1) create a folder '<param p="1"/>' in /modulename/<param p="2"/>embeddedobjects/<br/><br/>2) create WHLIB, Witty, SCSS, siteprl and JS (ES6/7) files in this new folder</text>
@@ -10,7 +10,7 @@
     <text tid="createembeddedobjectfolder">Create embedded object</text>
     <text tid="createtemplate">Create template</text>
     <text tid="savesettings">Save settings</text>
-    <text tid="screentitle">Screen title</text>
+    <text tid="screentitle">Code generator</text>
     <textgroup gid="createtemplate">   <!-- siteprofiles.createtemplate -->
       <text tid="createembeddedobjectfolder">This action will perform these tasks:<br/><br/>1) create a folder '<param p="1"/>' in /modulename/<param p="2"/>embeddedobjects/<br/><br/>2) create WHLIB, Witty, SCSS and JS (ES6/7) files in this new folder</text>
       <text tid="createtemplate">Create template</text>
