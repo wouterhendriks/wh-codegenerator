@@ -30,16 +30,14 @@
         <part width="1pr" marginright="5px">
           <box title="Settings">
             <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
-            <line>
-              <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title" />
-              <text title="" value="(singular)" />
-            </line>
+            <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title singular" />
+            <textedit name="itemtitleplural" width="1pr" onchange="onanychange" title="Object title plural" />
             <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
             <line layout="left">
-              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type" onchange="onanychange" value="true" />
+              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type (recommended)" onchange="onanychange" value="true" />
             </line>
             <line layout="left">
-              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file" onchange="onanychange" value="true" />
+              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file (deprecated?)" onchange="onanychange" value="true" />
             </line>
             <line layout="left">
               <checkbox name="use_tids" title="" label="Use gids and tids" onchange="onanychange" value="true" />

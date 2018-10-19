@@ -18,24 +18,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       debug := TRUE;
     }
 
-    /* +NAME: 'bedankt'
-       +TITLE: 'bedankt'
-       +FILETYPES: RECORD ARRAY
-        +NAME: 'bedankt'
-        +TITLE: 'bedankt'
-       +FOLDERTYPES: RECORD ARRAY
-        +NAME: 'bedankt'
-        +TITLE: 'bedankt'
-       +MEMBERS: RECORD ARRAY
-        +COMMENTS: ''
-        +NAME: 'INLEIDING'
-        +REQUIRED: FALSE
-        +TITLE: 'Inleiding'
-        +TYPE: 'string'
-        +MEMBERS: RECORD ARRAY[0] // for arrayedit types
-        +OPTIONS: RECORD ARRAY[0]
-        +SETTINGS: DEFAULT RECORD
-    */
     STRING regsettings := GetRegistryKey(-1, "codegenerator.siteprofiles.settings", "");
     RECORD prefillsettings := regsettings = "" ? DEFAULT RECORD : DecodeHSON(regsettings);
 
@@ -43,6 +25,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     {
       this->baseurl->value := prefillsettings.baseurl;
       this->itemtitle->value := prefillsettings.itemtitle;
+      this->itemtitleplural->value := prefillsettings.itemtitleplural;
       this->lib->value := prefillsettings.lib;
       this->members->value := SELECT * FROM prefillsettings.members;
       this->use_rtd->value := prefillsettings.use_rtd;
@@ -84,6 +67,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                               ];
 
       this->itemtitle->value := "Project";
+      this->itemtitleplural->value := "Projecten";
       this->lib->value := "project";
     }
     ELSE IF ("create" IN data.params)
@@ -108,6 +92,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
   MACRO OnAnyChange()
   {
+    this->index_is_rtd->enabled := NOT this->use_rtd->value;
+
     IF (NOT debug AND initdone)
     {
       this->DoSaveSettings();
@@ -140,9 +126,10 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
                    , title := this->itemtitle->value//Substitute(this->itemtitle->value, " ", "")
+                   , title_plural := this->itemtitleplural->value
                    , originaltitle := this->itemtitle->value
-                   , filetypes := [[ title := this->itemtitle->value, isrtd := FALSE ]]
-                   , foldertypes := [[ title := this->itemtitle->value ]]
+                   , filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), titleplural := this->CapitalizeFirstChar(this->itemtitleplural->value), isrtd := FALSE ]]
+                   , foldertype := [ title := this->CapitalizeFirstChar(this->itemtitle->value), titleplural := this->CapitalizeFirstChar(this->itemtitleplural->value) ]
                    , members := members
                    , lib := this->lib->value
                    , screen_only := FALSE
@@ -150,11 +137,11 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    , add_custom_rtdtype := this->add_custom_rtdtype->value
                    , page_only := this->page_only->value
                    , index_is_rtd := this->index_is_rtd->value
+                   , use_rtd := this->use_rtd->value
                    ];
 
     IF (this->use_rtd->value = TRUE)
     {
-      //data.foldertypes := DEFAULT RECORD ARRAY;
       UPDATE data.filetypes SET isrtd := TRUE;
 
       INSERT CELL filetype_is_rtd := TRUE INTO data;
@@ -168,6 +155,11 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     this->GenerateWittyCode(data);
 
     this->GenerateScreenOnlyCode(data);
+  }
+
+  STRING FUNCTION CapitalizeFirstChar(STRING text)
+  {
+    RETURN ToUpperCase(Left(text,1)) || Substring(text, 1);
   }
 
   RECORD FUNCTION ConvertToExpectedData(RECORD data)
@@ -241,7 +233,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
   MACRO GenerateScreenOnlyCode(RECORD data)
   {
     data.filetypes := DEFAULT RECORD ARRAY;
-    data.foldertypes := DEFAULT RECORD ARRAY;
+    data.foldertype := DEFAULT RECORD;
     data.screen_only := TRUE;
 
     data := this->ConvertToExpectedData(data);
@@ -254,6 +246,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     // save settings as HSON
     RECORD settings := [ baseurl := this->baseurl->value
                        , itemtitle := this->itemtitle->value
+                       , itemtitleplural := this->itemtitleplural->value
                        , lib := this->lib->value
                        , members := this->members->value
                        , use_rtd := this->use_rtd->value
