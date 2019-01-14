@@ -31,23 +31,30 @@
           <box title="Settings">
             <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
             <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title singular" />
-            <textedit name="itemtitleplural" width="1pr" onchange="onanychange" title="Object title plural" />
             <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
-            <line layout="left">
-              <checkbox name="use_rtd" title="" label="Use RTDs as the custom file type (recommended)" onchange="onanychange" value="true" />
-            </line>
+            <select name="type" type="radio" title="Code type" onchange="onanychange">
+              <option rowkey="folderwithindex" title="Overview folder with index file and details page" />
+              <option rowkey="pageonly" title="Custom page only" />
+            </select>
+            <!--
             <line layout="left">
               <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file (deprecated?)" onchange="onanychange" value="true" />
             </line>
+            -->
             <line layout="left">
               <checkbox name="use_tids" title="" label="Use gids and tids" onchange="onanychange" value="true" />
             </line>
             <line layout="left">
+              <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
+            </line>
+            <line layout="left">
               <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type" onchange="onanychange" value="true" />
             </line>
+            <!--
             <line layout="left">
               <checkbox name="page_only" title="" label="Not a folder, just a page" onchange="onanychange" value="true" />
             </line>
+            -->
           </box>
           <box height="1pr" title="Members">
             <arrayedit name="members"
@@ -65,11 +72,11 @@
           </line>
         </part>
         <part width="2pr">
-          <tabs height="1pr" name="maintabs">
+          <tabs height="1pr" name="maintabs" savestate="selectedtab">
             <tab title="Embedded object">
-              <tabs height="1pr">
+              <tabs height="1pr" savestate="selectedtab">
                 <tab title="Site profile (.siteprl)">
-                  <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" />
+                  <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
                 </tab>
                 <tab title="Library (.whlib)">
                   <codeedit name="emb_libcode" width="1pr" height="1pr" enabled="false" />
@@ -81,7 +88,7 @@
             </tab>
             <tab title="Object scaffolding" name="objectscaffolding">
               <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
-              <tabs height="1pr">
+              <tabs height="1pr" savestate="selectedtab">
                 <tab title="Site profile (.siteprl)">
                   <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
                 </tab>

@@ -23,16 +23,16 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     IF (RecordExists(prefillsettings))
     {
+      this->type->value := prefillsettings.type;
       this->baseurl->value := prefillsettings.baseurl;
       this->itemtitle->value := prefillsettings.itemtitle;
-      this->itemtitleplural->value := prefillsettings.itemtitleplural;
       this->lib->value := prefillsettings.lib;
       this->members->value := SELECT * FROM prefillsettings.members;
-      this->use_rtd->value := prefillsettings.use_rtd;
+      this->use_rtd->value := CellExists(prefillsettings, "use_rtd") AND prefillsettings.use_rtd;
       this->use_tids->value := CellExists(prefillsettings, "use_tids") AND prefillsettings.use_tids;
       this->add_custom_rtdtype->value := CellExists(prefillsettings, "add_custom_rtdtype") AND prefillsettings.add_custom_rtdtype;
-      this->page_only->value := CellExists(prefillsettings, "page_only") AND prefillsettings.page_only;
-      this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
+      //this->page_only->value := CellExists(prefillsettings, "page_only") AND prefillsettings.page_only;
+      //this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
 
       this->DoGenerateCode();
     }
@@ -67,7 +67,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                               ];
 
       this->itemtitle->value := "Project";
-      this->itemtitleplural->value := "Projecten";
       this->lib->value := "project";
     }
     ELSE IF ("create" IN data.params)
@@ -92,7 +91,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
   MACRO OnAnyChange()
   {
-    this->index_is_rtd->enabled := NOT this->use_rtd->value;
+    //this->index_is_rtd->enabled := NOT this->use_rtd->value AND NOT this->page_only->value;
+    this->use_rtd->enabled := this->type->value != "folderwithindex";
 
     IF (NOT debug AND initdone)
     {
@@ -126,21 +126,20 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
                    , title := this->itemtitle->value//Substitute(this->itemtitle->value, " ", "")
-                   , title_plural := this->itemtitleplural->value
                    , originaltitle := this->itemtitle->value
-                   , filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), titleplural := this->CapitalizeFirstChar(this->itemtitleplural->value), isrtd := FALSE ]]
-                   , foldertype := [ title := this->CapitalizeFirstChar(this->itemtitle->value), titleplural := this->CapitalizeFirstChar(this->itemtitleplural->value) ]
+                   , filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), isrtd := this->use_rtd->value ]]
+                   , foldertype := [ title := this->CapitalizeFirstChar(this->itemtitle->value) ]
                    , members := members
                    , lib := this->lib->value
                    , screen_only := FALSE
                    , use_tids := this->use_tids->value
                    , add_custom_rtdtype := this->add_custom_rtdtype->value
-                   , page_only := this->page_only->value
-                   , index_is_rtd := this->index_is_rtd->value
-                   , use_rtd := this->use_rtd->value
+                   , page_only := this->type->value = "pageonly"
+                   //, index_is_rtd := this->index_is_rtd->value
+                   , use_rtd := this->type->value = "folderwithindex" OR (this->type->value = "pageonly" AND this->use_rtd->value)
                    ];
 
-    IF (this->use_rtd->value = TRUE)
+    IF (this->type->value = "folderwithindex")
     {
       UPDATE data.filetypes SET isrtd := TRUE;
 
@@ -246,14 +245,14 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     // save settings as HSON
     RECORD settings := [ baseurl := this->baseurl->value
                        , itemtitle := this->itemtitle->value
-                       , itemtitleplural := this->itemtitleplural->value
                        , lib := this->lib->value
                        , members := this->members->value
-                       , use_rtd := this->use_rtd->value
+                       , type := this->type->value
+                       //, use_rtd := this->use_rtd->value
                        , use_tids := this->use_tids->value
                        , add_custom_rtdtype := this->add_custom_rtdtype->value
-                       , page_only := this->page_only->value
-                       , index_is_rtd := this->index_is_rtd->value
+                       //, page_only := this->page_only->value
+                       //, index_is_rtd := this->index_is_rtd->value
                        ];
 
     OBJECT work := this->BeginWork();
