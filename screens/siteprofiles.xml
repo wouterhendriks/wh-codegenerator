@@ -48,7 +48,7 @@
               <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
             </line>
             <line layout="left">
-              <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type" onchange="onanychange" value="true" />
+              <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type for &lt;richdocument rtdtype&gt; attributes" onchange="onanychange" value="true" />
             </line>
             <!--
             <line layout="left">

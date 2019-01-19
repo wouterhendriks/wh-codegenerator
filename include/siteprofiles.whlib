@@ -21,8 +21,8 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   IF (siteprofilesection.add_custom_rtdtype)
   {
     o := o ||
-`  <rtdtype namespace="${baseurl}rtd/${siteprofilesection.name}">
-    <css path="../../shared/css/rtd.css" />
+`  <rtdtype namespace="${baseurl}rtd/${siteprofilesection.lib}">
+    <css path="../../shared/rtd/rtd.css" />
     <blockstyles defaultstyle="NORMAL">
       <textstyle tag="NORMAL" textstyles="b i a-href sup sub strike" />
     </blockstyles>
@@ -135,7 +135,6 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
     o := o || '  </contenttype>\n\n';
   }
 
-  //abort(siteprofilesection);
   //IF (NOT siteprofilesection.use_rtd)
   {
     FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
@@ -158,13 +157,19 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   //IF (siteprofilesection.use_rtd)
   IF (siteprofilesection.page_only)
   {
-    o := o ||
-`  <apply>
-    <to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />
-    <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
-    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
-  </apply>
-`;
+//    o := o ||
+//`  <apply>
+//    <to type="file" filetype="${filetype}" />
+//    <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
+//`;
+
+//    IF (siteprofilesection.use_rtd)
+//      o := o || '    <setobjecteditor name="publisher:editdocument" />\n';
+
+//    o := o ||
+//`    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
+//  </apply>
+//`;
   }
   ELSE
   {
@@ -253,9 +258,9 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent)
                   GROUP BY childmembers.name;
 
     FOREVERY (RECORD childmember FROM childmembers)
-      xml := xml || AddWhiteSpace(memberindent) || GetSiteProfileMember(childmember, memberindent);
+      xml := xml || WS(memberindent) || GetSiteProfileMember(childmember, memberindent);
 
-    xml := xml || "  " || AddWhiteSpace(memberindent) || "</member>\n";
+    xml := xml || "  " || WS(memberindent) || "</member>\n";
 
     RETURN xml;
   }
@@ -490,7 +495,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
               || '                    cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
               || '                    height="1pr"\n'
               || '                    ' || errorlabel || '\n'
-              || '                    rtdtype="' || (CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype ? `${screenbaseurl}rtd/${screendata.name}` : "your-rtd-type-url") || '"\n'
+              || '                    rtdtype="' || (CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype ? `${screenbaseurl}rtd/${screendata.lib}` : "your-rtd-type-url") || '"\n'
               || (siteprofmember.required ? '                    required="true"\n' : '')
               || '                    />';
       }
@@ -660,18 +665,18 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.name);
+  STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib);
   //IF (filetype_is_rtd)
     //xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
 
   STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(siteprofilesection.foldertype.title) || 's';
 
-  IF (siteprofilesection.use_rtd)
-  {
+  //IF (siteprofilesection.use_rtd)
+  //{
 
-  }
-  ELSE
-  {
+  //}
+  //ELSE
+  //{
     IF (NOT siteprofilesection.page_only)
     {
       xml := xml
@@ -689,30 +694,30 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
     IF (NOT siteprofilesection.page_only)
       xml := xml ||
-  `    <and>
-      <not>
-        <to type="index" parenttype="${xmlns_folder}" />
-      </not>
-      <to type="file" parenttype="${xmlns_folder}" filetype="${xmlns_file}" />
-    </and>
-  `;
+      `    <and>
+          <not>
+            <to type="index" parenttype="${xmlns_folder}" />
+          </not>
+          <to type="file" parenttype="${xmlns_folder}" filetype="${xmlns_file}" />
+        </and>
+      `;
     ELSE
       xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
 
     IF (siteprofilesection.page_only)
     {
-      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.name)}spage" />` || '\n';
+      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />` || '\n';
     }
 
-    IF (filetype_is_rtd)
+    IF (filetype_is_rtd OR siteprofilesection.use_rtd)
       xml := xml || '    <setobjecteditor name="publisher:editdocument" />\n';
     ELSE
       xml := xml || '    <setobjecteditor name="publisher:propertydialog" />\n';
 
     xml := xml
-        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.name) || '" />\n'
+        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '" />\n'
         || '  </apply>\n\n';
-  }
+  //}
 
   RETURN xml;
 }
@@ -725,7 +730,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
   STRING name := GetSiteProfileXMLName(siteprofilesection.title);
   STRING name_plural := name || "s";
-  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
+  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ",");
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
   BOOLEAN index_is_rtd := CellExists(siteprofilesection, "index_is_rtd") AND siteprofilesection.index_is_rtd = TRUE;
@@ -744,6 +749,9 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   IF (Right(baseurl, 1) != "/")
     baseurl := baseurl || "/";
 
+//IF (Length(siteprofilesection.members) > 0)
+//  abort(siteprofilesection.members);
+
   STRING o;
   IF (siteprofilesection.page_only)
   {
@@ -757,8 +765,29 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     RECORD ${siteprofilesection.lib}data := webdesign->targetobject->GetInstanceData("${baseurl}filetype/${siteprofilesection.lib}");
 
     RECORD wittydata :=
-        CELL[ ${siteprofilesection.lib}data
-            ];
+        CELL[ ...${siteprofilesection.lib}data
+`;
+
+    IF (siteprofilesection.use_rtd)
+      o := o || `            , body := PTR webdesign->OpenRTDFromFile(webdesign->targetobject)->RenderAllObjects()
+`;
+
+    FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, `${siteprofilesection.lib}data`))
+    {
+//      abort(siteprofilesection.members);
+      IF (siteprofmember.value = "")
+        CONTINUE;
+
+      loadlibs := loadlibs CONCAT siteprofmember.loadlibs;
+
+      IF (siteprofmember.type = "image")
+        siteprofmember.value := Substitute(siteprofmember.value, `WrapCachedImage(${siteprofmember.name}`, `WrapCachedImage(${siteprofilesection.lib}data.${siteprofmember.name}`);
+
+      o := o || WS(12) || ', ' || siteprofmember.name || ' := ' || siteprofmember.value || '\n';
+    }
+
+    o := o ||
+`            ];
 
     RETURN PTR LoadWittyLibrary(Resolve("${siteprofilesection.lib}.witty"), "HTML-NI")->Run(wittydata);
   }
@@ -766,7 +795,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
   }
   ELSE
   {
-    o := 'PUBLIC OBJECTTYPE ' || title_plural || 'Page EXTEND StaticPageBase\n'
+    o := 'PUBLIC OBJECTTYPE ' || CapitalizeFirstChar(siteprofilesection.lib) || 'Page EXTEND StaticPageBase\n'
              || '<\n'
              || '  OBJECT webdesign;\n'
              || '  RECORD wittydata;\n'
@@ -786,7 +815,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
              || '\n'
              || '  MACRO PrepareForIndex()\n'
              || '  {\n'
-             || '    this->wittycomponent := "' || name_plural || 'index";\n'
+             || '    this->wittycomponent := "' || siteprofilesection.lib || 'index";\n'
              || '\n';
 
     IF (siteprofilesection.use_rtd)
@@ -794,7 +823,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
       o := o ||
 `    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");
 
-    RECORD ARRAY ${name_plural} :=
+    RECORD ARRAY ${siteprofilesection.lib} :=
          SELECT id
               , title
               , link := indexurl
@@ -808,7 +837,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 `;
     }
 
-    o := o || '    OBJECT ' || name || 'type := OpenWHFSType("' || baseurl || 'filetype/' || name || '");\n\n';
+    o := o || '    OBJECT ' || siteprofilesection.lib || 'type := OpenWHFSType("' || baseurl || 'filetype/' || siteprofilesection.lib || '");\n\n';
 
     IF (NOT siteprofilesection.use_rtd)
     {
@@ -816,7 +845,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
         o := o || '    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");\n';
 
       o := o || '\n'
-             || '    RECORD ARRAY ' || name_plural || ' := \n'
+             || '    RECORD ARRAY ' || siteprofilesection.lib || ' := \n'
              || '         SELECT id\n'
              || '              , title\n'
              || '              , link := indexurl\n';
@@ -840,31 +869,33 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     }
     ELSE
     {
-      o := o || '    ' || name_plural || ' := \n'
+      o := o || '    ' || siteprofilesection.lib || ' := \n'
         || '        SELECT *\n';
 
-      FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+      FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, '???'))
       {
-        SWITCH (siteprofmember.type)
-        {
-          CASE "datetime"
-          {
-            INSERT 'wh::datetime.whlib' INTO loadlibs AT END;
+        loadlibs := loadlibs CONCAT siteprofmember.loadlibs;
+        o := o || WS(13) || ', ' || siteprofmember.name || ' := ' || siteprofmember.value || '\n';
+        //SWITCH (siteprofmember.type)
+        //{
+        //  CASE "datetime"
+        //  {
+        //    INSERT 'wh::datetime.whlib' INTO loadlibs AT END;
 
-            //FIXME: Take 'precision' and 'storeutc' into account
+        //    //FIXME: Take 'precision' and 'storeutc' into account
 
-            o := o || AddWhiteSpace(13) || ', ' || siteprofmember.name || ' := FormatDateTime("%d-%m-%Y", ' || siteprofmember.name || ')\n';
-          }
-          CASE "image"
-          {
-            INSERT 'mod::system/lib/cache.whlib' INTO loadlibs AT END;
+        //    o := o || WS(13) || ', ' || siteprofmember.name || ' := FormatDateTime("%d-%m-%Y", ' || siteprofmember.name || ')\n';
+        //  }
+        //  CASE "image"
+        //  {
+        //    INSERT 'mod::system/lib/cache.whlib' INTO loadlibs AT END;
 
-            o := o || AddWhiteSpace(13) || ', ' || siteprofmember.name || ' := WrapCachedImage(' || siteprofmember.name || ', [ method := "fit", setwidth := 1920, format := "image/jpeg" ])\n';
-          }
-        }
+        //    o := o || WS(13) || ', ' || siteprofmember.name || ' := WrapCachedImage(' || siteprofmember.name || ', [ method := "fit", setwidth := 1920, format := "image/jpeg" ])\n';
+        //  }
+        //}
       }
 
-      o := o || AddWhiteSpace(10) || 'FROM ' || name || 'type->Enrich(' || name_plural || ', "id", [ ' || memberfields_detokenized || ' ]);\n\n';
+      o := o || WS(10) || 'FROM ' || siteprofilesection.lib || 'type->Enrich(' || siteprofilesection.lib || ', "id", [ ' || memberfields_detokenized || ' ]);\n\n';
     }
 
     //o := o || '\n';
@@ -872,7 +903,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     IF (index_is_rtd)
       o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->targetobject);\n\n';
 
-    o := o || '    this->wittydata := CELL[ ' || name_plural || '\n';
+    o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || '\n';
 
     IF (index_is_rtd)
       o := o || '                           , body := PTR indexpagecontents->RenderAllObjects()\n';
@@ -883,15 +914,15 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
            || '  MACRO PrepareForDetails()\n'
            || '  {\n'
            // FIXME: Support for custom cells, like dates and RTEs
-           || '    this->wittycomponent := "' || name || 'details";\n'
+           || '    this->wittycomponent := "' || siteprofilesection.lib || 'details";\n'
            || '\n'
-           || '    RECORD ' || name || 'data := this->webdesign->targetobject->GetInstanceData("' || baseurl || 'filetype/' || name || '");\n'
+           || '    RECORD ' || siteprofilesection.lib || 'data := this->webdesign->targetobject->GetInstanceData("' || baseurl || 'filetype/' || siteprofilesection.lib || '");\n'
            || '\n';
 
     //IF (filetype_is_rtd)
     //  o := o || '    OBJECT pagecontents := ;\n\n';
 
-    o := o || '    this->wittydata := CELL[ ' || name || 'data\n';
+    o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || 'data\n';
 
     IF (filetype_is_rtd)
       o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->targetobject->id)->RenderAllObjects()\n';
@@ -933,7 +964,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   STRING title_plural := siteprofilesection.title || "s";
   STRING name := GetSiteProfileXMLName(siteprofilesection.title);
   STRING name_plural := name || "s";
-  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
+  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ",");
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
   BOOLEAN index_is_rtd := CellExists(siteprofilesection, "index_is_rtd") AND siteprofilesection.index_is_rtd = TRUE;
@@ -941,21 +972,21 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   filetype_is_rtd := FALSE;
 
   RETURN
-`[component ${name}sindex]
-  <div class="p-${name}sindex">
+`[component ${siteprofilesection.lib}index]
+  <div class="p-${siteprofilesection.lib}index">
 
   </div>
 [/component]
 
-[component ${name}details]
-  <div class="p-${name}details">
+[component ${siteprofilesection.lib}details]
+  <div class="p-${siteprofilesection.lib}details">
 
   </div>
 [/component]
 `;
 }
 
-STRING FUNCTION AddWhiteSpace(INTEGER numspaces)
+STRING FUNCTION WS(INTEGER numspaces)
 {
   STRING text;
 
@@ -1011,7 +1042,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
     o := o ||
 `
   <rtdtype namespace="${baseurl}rtd/${name}">
-    <css path="../../shared/css/rtd.css" />
+    <css path="../../shared/rtd/rtd.css" />
     <blockstyles defaultstyle="NORMAL">
       <textstyle tag="NORMAL" textstyles="b i a-href sup sub strike" />
     </blockstyles>
@@ -1096,53 +1127,54 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibraryEmbObj(STRING baseurl, RECORD s
 
   STRING ARRAY loadlibs := [ 'mod::publisher/lib/widgets.whlib' ];
 
-  RECORD ARRAY extradata;
-  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
-  {
-    SWITCH (siteprofmember.type)
-    {
-      CASE "datetime"
-      {
-        INSERT 'wh::datetime.whlib' INTO loadlibs AT END;
+  RECORD ARRAY extradata := GenerateExtraMemberCellsForWhlib(siteprofilesection, 'this->data');
 
-        INSERT [ name := siteprofmember.name
-               , value := `FormatDateTime("%d-%m-%Y", this->data.${siteprofmember.name})`
-               ] INTO extradata AT END;
-      }
-      CASE "image"
-      {
-        INSERT 'mod::system/lib/cache.whlib' INTO loadlibs AT END;
+  //FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+  //{
+  //  SWITCH (siteprofmember.type)
+  //  {
+  //    CASE "datetime"
+  //    {
+  //      INSERT 'wh::datetime.whlib' INTO loadlibs AT END;
 
-        INSERT [ name := siteprofmember.name
-               , value := `WrapCachedImage(this->data.${siteprofmember.name}, [ method := "fit", setwidth := 1920, format := "image/jpeg" ])`
-               ] INTO extradata AT END;
-      }
-      CASE "array"
-      {
-        INSERT [ name := siteprofmember.name
-               , value := `(SELECT * FROM this->data.${siteprofmember.name})`
-               ] INTO extradata AT END;
-      }
-      CASE "richdocument"
-      {
-        STRING rtdtype := CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype
-                          ? `${baseurl}rtd/${screendata.name}`
-                          : "your-rtd-type-url";
+  //      INSERT [ name := siteprofmember.name
+  //             , value := `FormatDateTime("%d-%m-%Y", this->data.${siteprofmember.name})`
+  //             ] INTO extradata AT END;
+  //    }
+  //    CASE "image"
+  //    {
+  //      INSERT 'mod::system/lib/cache.whlib' INTO loadlibs AT END;
 
-        INSERT [ name := siteprofmember.name
-               , value := `PTR this->context->OpenRTD(this->data.${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
-               ] INTO extradata AT END;
-      }
-      CASE "intextlink"
-      {
-        INSERT 'mod::publisher/lib/publisher.whlib' INTO loadlibs AT END;
+  //      INSERT [ name := siteprofmember.name
+  //             , value := `WrapCachedImage(this->data.${siteprofmember.name}, [ method := "fit", setwidth := 1920, format := "image/jpeg" ])`
+  //             ] INTO extradata AT END;
+  //    }
+  //    CASE "array"
+  //    {
+  //      INSERT [ name := siteprofmember.name
+  //             , value := `(SELECT * FROM this->data.${siteprofmember.name})`
+  //             ] INTO extradata AT END;
+  //    }
+  //    CASE "richdocument"
+  //    {
+  //      STRING rtdtype := CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype
+  //                        ? `${baseurl}rtd/${screendata.name}`
+  //                        : "your-rtd-type-url";
 
-        INSERT [ name := siteprofmember.name
-               , value := `GetInTextLinkTarget(this->data.${siteprofmember.name})`
-               ] INTO extradata AT END;
-      }
-    }
-  }
+  //      INSERT [ name := siteprofmember.name
+  //             , value := `PTR this->context->OpenRTD(this->data.${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
+  //             ] INTO extradata AT END;
+  //    }
+  //    CASE "intextlink"
+  //    {
+  //      INSERT 'mod::publisher/lib/publisher.whlib' INTO loadlibs AT END;
+
+  //      INSERT [ name := siteprofmember.name
+  //             , value := `GetInTextLinkTarget(this->data.${siteprofmember.name})`
+  //             ] INTO extradata AT END;
+  //    }
+  //  }
+  //}
 
   // add <?wh and loadlibs
   STRING o := '<?wh\n\n';
@@ -1170,8 +1202,11 @@ PUBLIC OBJECTTYPE ${siteprofilesection.name} EXTEND WidgetBase
 
     FOREVERY (RECORD extradatarec FROM extradata)
     {
-      o := o || `
+      IF (extradatarec.value != "")
+      {
+        o := o || `
            , ${extradatarec.name} := ${extradatarec.value}`;
+      }
     }
 
     o := o ||
@@ -1200,7 +1235,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWittyEmbObj(RECORD siteprofilesection)
   STRING title_plural := siteprofilesection.title || "s";
   STRING name := GetSiteProfileXMLName(siteprofilesection.name);
   STRING name_plural := name || "s";
-  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ", ");
+  STRING memberfields_detokenized := Detokenize((SELECT AS STRING ARRAY '"' || members.name || '"' FROM siteprofilesection.members), ",");
 
   BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
   BOOLEAN index_is_rtd := CellExists(siteprofilesection, "index_is_rtd") AND siteprofilesection.index_is_rtd = TRUE;
@@ -1239,4 +1274,64 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWittyEmbObj(RECORD siteprofilesection)
 STRING FUNCTION CapitalizeFirstChar(STRING text)
 {
   RETURN ToUpperCase(Left(text,1)) || Substring(text, 1);
+}
+
+RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRING recordname)
+{
+  RECORD ARRAY returnmembers; // type, loadlibs, name, value
+  FOREVERY (RECORD siteprofmember FROM siteprofile.members)
+  {
+    RECORD addrec := CELL[ siteprofmember.type
+                         , siteprofmember.name
+                         , loadlibs := STRING[]
+                         , value := ""
+                         ];
+    SWITCH (siteprofmember.type)
+    {
+      CASE "datetime"
+      {
+        //FIXME: Take 'precision' and 'storeutc' into account
+        addrec := [ ...addrec
+                  , loadlibs := ['wh::datetime.whlib']
+                  , value := `FormatDateTime("%d-%m-%Y", ${siteprofmember.name}`
+                  ];
+      }
+      CASE "image"
+      {
+        addrec := [ ...addrec
+                  , loadlibs := ['mod::system/lib/cache.whlib']
+                  , value := `WrapCachedImage(${recordname}.${siteprofmember.name}, [ method := "fit", setwidth := 1920, format := "image/jpeg" ])`
+                  ];
+      }
+      CASE "array"
+      {
+        INSERT [ ...addrec
+               , name := siteprofmember.name
+               , value := `(SELECT * FROM this->data.${siteprofmember.name})`
+               ] INTO returnmembers AT END;
+      }
+      CASE "richdocument"
+      {
+        STRING rtdtype := CellExists(siteprofile, "add_custom_rtdtype") AND siteprofile.add_custom_rtdtype
+                          ? `${screenbaseurl}rtd/${siteprofile.lib}`
+                          : "your-rtd-type-url";
+
+        INSERT [ ...addrec
+               , name := siteprofmember.name
+               , value := `PTR webdesign->OpenRTD(${recordname}.${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
+               ] INTO returnmembers AT END;
+      }
+      CASE "intextlink"
+      {
+        INSERT [ ...addrec
+               , name := siteprofmember.name
+               , value := `GetInTextLinkTarget(${siteprofmember.name})`
+               , loadlibs := ['mod::publisher/lib/publisher.whlib']
+               ] INTO returnmembers AT END;
+      }
+    }
+
+    INSERT addrec INTO returnmembers AT END;
+  }
+  RETURN returnmembers;
 }

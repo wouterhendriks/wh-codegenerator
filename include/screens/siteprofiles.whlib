@@ -248,7 +248,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                        , lib := this->lib->value
                        , members := this->members->value
                        , type := this->type->value
-                       //, use_rtd := this->use_rtd->value
+                       , use_rtd := this->use_rtd->value
                        , use_tids := this->use_tids->value
                        , add_custom_rtdtype := this->add_custom_rtdtype->value
                        //, page_only := this->page_only->value
