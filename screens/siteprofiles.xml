@@ -13,6 +13,7 @@
       <action name="savesettings" onexecute="dosavesettings" />
       <action name="createtemplate" onexecute="docreatetemplate" />
       <action name="createembeddedobjectfolder" onexecute="docreateembeddedobjectfolder" />
+      <action name="createformfolder" onexecute="docreateformfolder" />
     </actions>
 
     <menus>
@@ -23,89 +24,119 @@
     <toolbar name="toolbar">
       <button title="Create template" action="createtemplate" icon="tollium:actions/add" />
       <button title="Create embedded object" action="createembeddedobjectfolder" icon="tollium:actions/add" />
+      <button title="Create form" action="createformfolder" icon="tollium:actions/add" />
     </toolbar>
 
-    <body>
-      <split type="horizontal">
-        <part width="1pr" marginright="5px">
-          <box title="Settings">
-            <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
-            <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title singular" />
-            <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
-            <select name="type" type="radio" title="Code type" onchange="onanychange">
-              <option rowkey="folderwithindex" title="Overview folder with index file and details page" />
-              <option rowkey="pageonly" title="Custom page only" />
-            </select>
-            <!--
-            <line layout="left">
-              <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file (deprecated?)" onchange="onanychange" value="true" />
-            </line>
-            -->
-            <line layout="left">
-              <checkbox name="use_tids" title="" label="Use gids and tids" onchange="onanychange" value="true" />
-            </line>
-            <line layout="left">
-              <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
-            </line>
-            <line layout="left">
-              <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type for &lt;richdocument rtdtype&gt; attributes" onchange="onanychange" value="true" />
-            </line>
-            <!--
-            <line layout="left">
-              <checkbox name="page_only" title="" label="Not a folder, just a page" onchange="onanychange" value="true" />
-            </line>
-            -->
-          </box>
-          <box height="1pr" title="Members">
-            <arrayedit name="members"
-                       height="1pr"
-                       roweditscreen=".editmember"
-                       onchange="onanychange"
-                       orderable="true"
-                       >
-              <column type="text" name="title" title="Title" />
-              <column type="text" name="name" title="Name" />
-            </arrayedit>
-          </box>
-          <line layout="center">
-            <button action="savesettings" title="Save these settings in registry" />
-          </line>
-        </part>
-        <part width="2pr">
-          <tabs height="1pr" name="maintabs" savestate="selectedtab">
-            <tab title="Embedded object">
-              <tabs height="1pr" savestate="selectedtab">
-                <tab title="Site profile (.siteprl)">
-                  <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
+    <body spacers="none">
+      <tabs height="1pr" savestate="selectedtab">
+        <tab title="Site profile / embedded objects">
+          <split type="horizontal">
+            <part width="1pr" marginright="5px">
+              <box title="Settings">
+                <textedit name="baseurl" width="1pr" onchange="onanychange" title="Base URL" />
+                <textedit name="itemtitle" width="1pr" onchange="onanychange" title="Object title" />
+                <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
+                <select name="type" type="radio" title="Code type" onchange="onanychange">
+                  <option rowkey="folderwithindex" title="Overview folder with index file and details page" />
+                  <option rowkey="pageonly" title="Custom page only" />
+                </select>
+                <!--
+                <line layout="left">
+                  <checkbox name="index_is_rtd" title="" label="Use an RTD for the index file (deprecated?)" onchange="onanychange" value="true" />
+                </line>
+                -->
+                <line layout="left">
+                  <checkbox name="use_tids" title="" label="Use gids and tids" onchange="onanychange" value="true" />
+                </line>
+                <line layout="left">
+                  <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
+                </line>
+                <line layout="left">
+                  <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type for &lt;richdocument rtdtype&gt; attributes" onchange="onanychange" value="true" />
+                </line>
+                <!--
+                <line layout="left">
+                  <checkbox name="page_only" title="" label="Not a folder, just a page" onchange="onanychange" value="true" />
+                </line>
+                -->
+              </box>
+              <box height="1pr" title="Members">
+                <arrayedit name="members"
+                           height="1pr"
+                           roweditscreen=".editmember"
+                           onchange="onanychange"
+                           orderable="true"
+                           >
+                  <column type="text" name="title" title="Title" />
+                  <column type="text" name="name" title="Name" />
+                </arrayedit>
+              </box>
+              <line layout="center">
+                <button action="savesettings" title="Save these settings in registry" />
+              </line>
+            </part>
+            <part width="2pr">
+              <tabs height="1pr" name="maintabs" savestate="selectedtab">
+                <tab title="Embedded object">
+                  <tabs height="1pr" savestate="selectedtab">
+                    <tab title="Site profile (.siteprl)">
+                      <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
+                    </tab>
+                    <tab title="Library (.whlib)">
+                      <codeedit name="emb_libcode" width="1pr" height="1pr" enabled="false" />
+                    </tab>
+                    <tab title="Template (.witty)">
+                      <codeedit name="emb_wittycode" width="1pr" height="1pr" enabled="false" />
+                    </tab>
+                  </tabs>
                 </tab>
-                <tab title="Library (.whlib)">
-                  <codeedit name="emb_libcode" width="1pr" height="1pr" enabled="false" />
+                <tab title="Object scaffolding" name="objectscaffolding">
+                  <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
+                  <tabs height="1pr" savestate="selectedtab">
+                    <tab title="Site profile (.siteprl)">
+                      <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
+                    </tab>
+                    <tab title="Library (.whlib)">
+                      <codeedit name="libcode" width="1pr" height="1pr" enabled="false" />
+                    </tab>
+                    <tab title="Template (.witty)">
+                      <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
+                    </tab>
+                  </tabs>
                 </tab>
-                <tab title="Template (.witty)">
-                  <codeedit name="emb_wittycode" width="1pr" height="1pr" enabled="false" />
+                <tab title="Screen only">
+                  <codeedit name="screen_siteprlcode" width="1pr" height="1pr" enabled="false" />
                 </tab>
               </tabs>
-            </tab>
-            <tab title="Object scaffolding" name="objectscaffolding">
-              <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
+            </part>
+          </split>
+        </tab>
+        <tab title="Forms">
+          <split type="horizontal">
+            <part width="1pr" marginright="5px">
+              <box title="Form settings">
+                <textedit name="form_tag" width="1pr" onchange="onanychange" title="Tag" />
+              </box>
+            </part>
+            <part width="2pr">
               <tabs height="1pr" savestate="selectedtab">
-                <tab title="Site profile (.siteprl)">
-                  <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
+                <tab title="Formdef (.formdef.xml)">
+                  <codeedit name="form_formdefcode" width="1pr" height="1pr" enabled="false" type="xml" />
+                </tab>
+                <tab title="JavaScript (.es)">
+                  <codeedit name="form_jscode" width="1pr" height="1pr" enabled="false" />
                 </tab>
                 <tab title="Library (.whlib)">
-                  <codeedit name="libcode" width="1pr" height="1pr" enabled="false" />
+                  <codeedit name="form_libcode" width="1pr" height="1pr" enabled="false" />
                 </tab>
                 <tab title="Template (.witty)">
-                  <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
+                  <codeedit name="form_wittycode" width="1pr" height="1pr" enabled="false" />
                 </tab>
               </tabs>
-            </tab>
-            <tab title="Screen only">
-              <codeedit name="screen_siteprlcode" width="1pr" height="1pr" enabled="false" />
-            </tab>
-          </tabs>
-        </part>
-      </split>
+            </part>
+          </split>
+        </tab>
+      </tabs>
     </body>
   </screen>
 
@@ -234,8 +265,8 @@
 
   <screen name="createtemplate" allowresize="true" minwidth="500px" gid=".createtemplate">
     <body>
-      <select name="module" type="pulldown" onchange="onmodulechange" />
-      <select name="sitedesign" type="pulldown" onchange="onmodulechange" />
+      <select public="true" name="module" type="pulldown" onchange="onmodulechange" />
+      <select public="true" name="sitedesign" type="pulldown" onchange="onmodulechange" />
       <hr />
       <line layout="left">
         <text name="explanation" title="" />
@@ -260,8 +291,8 @@
 
   <screen name="createembeddedobjectfolder" allowresize="true" minwidth="500px">
     <body>
-      <select name="module" type="pulldown" onchange="onmodulechange" title="Module" />
-      <select name="sitedesign" type="pulldown" onchange="onmodulechange" title="Site design" />
+      <select public="true" name="module" type="pulldown" onchange="onmodulechange" title="Module" />
+      <select public="true" name="sitedesign" type="pulldown" onchange="onmodulechange" title="Site design" />
       <hr />
       <line layout="left">
         <text name="explanation" title="" />
@@ -280,6 +311,36 @@
       <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
       <text title="" value="Add to your main &lt;rtdtype&gt;:" />
       <textarea name="add_rtdtype" width="1pr" height="1x" enabled="false" title="" />
+    </body>
+    <footer>
+      <defaultformbuttons buttons="close" />
+    </footer>
+  </screen>
+
+  <screen name="createformfolder" allowresize="true" minwidth="500px">
+    <body>
+      <select public="true" name="module" type="pulldown" onchange="onmodulechange" title="Module" />
+      <select public="true" name="sitedesign" type="pulldown" onchange="onmodulechange" title="Site design" />
+      <hr />
+      <line layout="left">
+        <text name="explanation" title="" />
+      </line>
+    </body>
+    <footer>
+      <defaultformbuttons buttons="ok cancel" />
+    </footer>
+  </screen>
+
+  <screen name="templatecreatedform" allowresize="true" minwidth="800px" gid=".createtform">
+    <body>
+      <text title="" value="Add to your WHLIB file:" />
+      <textarea enabled="false" name="add_whlib" width="1pr" height="1x" title="" />
+      <text title="" value="Add to your main site profile:" />
+      <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
+      <text title="" value="Add to your Witty:" />
+      <textarea name="add_witty" width="1pr" height="1x" enabled="false" title="" />
+      <text title="" value="Add to your main .es file:" />
+      <textarea name="add_js" width="1pr" height="1x" enabled="false" title="" />
     </body>
     <footer>
       <defaultformbuttons buttons="close" />

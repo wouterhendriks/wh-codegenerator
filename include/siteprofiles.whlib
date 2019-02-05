@@ -50,20 +50,19 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
            || '  <foldertype typedef="' || foldertype || '"\n'
            || '              title="' || EncodeHTML(siteprofilesection.foldertype.title) || '"\n'
            || '              tolliumicon="tollium:folders/projects"\n'
-           || (NOT siteprofilesection.use_rtd ? '              indexfile="contentlisting"\n' : '')
+           //|| (NOT siteprofilesection.use_rtd ? '              indexfile="contentlisting"\n' : '')
            || '              protectindexfile="true"\n'
            || '              >\n'
            || '  </foldertype>\n'
            || '\n';
 
-    IF (siteprofilesection.use_rtd)
-    {
-      o := o ||
+    STRING allowfiletype := siteprofilesection.use_rtd ? "http://www.webhare.net/xmlns/publisher/richdocumentfile" : filetype;
+    o := o ||
 `  <apply>
     <to type="all" parenttype="${foldertype}" />
     <denyfiletype typedef="*" />
     <denyfoldertype typedef="*" />
-    <allowfiletype typedef="http://www.webhare.net/xmlns/publisher/richdocumentfile" />
+    <allowfiletype typedef="${allowfiletype}" />
   </apply>
 
   <apply>
@@ -102,11 +101,10 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 
   <!-- ***********************************************************************
 
-       ${CapitalizeFirstChar(siteprofilesection.lib)} file (RTD)
+       ${CapitalizeFirstChar(siteprofilesection.lib)} file${siteprofilesection.use_rtd ? ' (RTD)' : ''}
 
   *********************************************************************** -->
 `;
-    }
   }
 
   // add <contenttye> with <member>s and <propertyeditor>s
@@ -135,13 +133,18 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
     o := o || '  </contenttype>\n\n';
   }
 
-  //IF (NOT siteprofilesection.use_rtd)
+  IF (NOT siteprofilesection.use_rtd)
   {
-    FOREVERY (RECORD filetype FROM siteprofilesection.filetypes)
-    {
-      o := o || GetFileType(filetype, screenbaseurl, siteprofilesection)
-             || "\n\n";
-    }
+    o := o ||
+         '  <filetype typedef="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '"\n'
+      || '            title="' || EncodeValue(siteprofilesection.title) || '"\n'
+      || '            blobiscontent="false"\n'
+      || '            ispublishable="true"\n'
+      || '            tolliumicon="tollium:files/text_plain"\n'
+      || '            isacceptableindex="false"\n'
+      || '            ispublishedassubdir="true"\n'
+      || '            needstemplate="true"\n'
+      || '            />\n\n';
   }
 
   IF (Length(siteprofilesection.members) > 0)
@@ -175,63 +178,26 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   {
     o := o ||
 `  <apply>
-    <to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />
+    ${siteprofilesection.use_rtd
+      ? `<to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />`
+      : `<to type="file" filetype="${filetype}" />`}
     <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
-  </apply>
-
-  <!-- ***********************************************************************
-
-       Body renderers
-
-  *********************************************************************** -->
-  <apply>
-    <to type="index" parenttype="${foldertype}" />
-    <to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />
-    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
   </apply>
 `;
   }
 
-  RETURN o;
-}
+  o := o ||
+`
+  <!-- ***********************************************************************
 
-STRING FUNCTION GetFileType(RECORD data, STRING baseurl, RECORD siteprofilesection)
-{
-  BOOLEAN addwebpage := NOT CellExists(data, "no_webpage") OR data.no_webpage = FALSE;
+       Body renderer
 
-  STRING o;
-
-  IF (data.isrtd)
-  {
-    o := '  <filetype typedef="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '"\n'
-      || '            title="' || EncodeValue(data.title) || '"\n'
-      || '            tolliumicon="tollium:files/application_x-webhare-richdocument"\n'
-      || '            blobiscontent="false"\n'
-      || '            needstemplate="true"\n'
-      || '            needsprofile="false"\n'
-      || '            ispublishable="true"\n'
-      || '            requirescontent="false"\n'
-      || '            isacceptableindex="true"\n'
-      || '            ispublishedassubdir="true"\n'
-      || '            extensions=".rtd"\n';
-  }
-  ELSE
-  {
-    o := '  <filetype typedef="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '"\n'
-      || '            title="' || EncodeValue(data.title) || '"\n'
-      || '            blobiscontent="false"\n'
-      || '            ispublishable="true"\n'
-      || '            tolliumicon="tollium:files/text_plain"\n';
-
-    IF (addwebpage)
-    {
-      o := o || '            isacceptableindex="false"\n'
-             || '            ispublishedassubdir="true"\n'
-             || '            needstemplate="true"\n';
-    }
-  }
-
-  o := o || '            />';
+  *********************************************************************** -->
+  <apply>
+    <to type="file" parenttype="${foldertype}" />
+    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
+  </apply>
+`;
 
   RETURN o;
 }
@@ -544,12 +510,16 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         {
           FOREVERY (RECORD arraymember FROM siteprofmember.members)
           {
-            SWITCH (ToUpperCase(arraymember.type))
+            STRING typeuc := ToUpperCase(arraymember.type);
+            SWITCH (typeuc)
             {
-              CASE "TEXTEDIT","STRING"
+              CASE "TEXTEDIT","STRING","IMAGE"
               {
-                xml := xml || '        <column type="text" '
+                STRING type := typeuc = "IMAGE" ? "blobrecord" : "text";
+
+                xml := xml || '        <column type="' || type || '" '
                            || 'name="' || GetSiteProfileXMLName(arraymember.name) || '" '
+                           || (typeuc = "IMAGE" ? 'show="info" ' : '')
                            || (arraymember.title != "" ? 'title="' || arraymember.title || '" ' : '')
                            || '/>\n';
               }
@@ -663,7 +633,7 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
 
   STRING xml;
 
-  BOOLEAN filetype_is_rtd := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+  BOOLEAN filetype_is_rtd;// := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
   STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib);
   //IF (filetype_is_rtd)
@@ -677,46 +647,39 @@ STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
   //}
   //ELSE
   //{
-    IF (NOT siteprofilesection.page_only)
-    {
-      xml := xml
-          || '  <apply>\n'
-          || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
-          || '    <denyfiletype typedef="*" />\n'
-          || '    <denyfoldertype typedef="*" />\n'
-          || '    <allowfiletype typedef="' || xmlns_file || '" />\n'
-          || '    <bodyrenderer library="' || siteprofilesection.lib || '.whlib" objectname="' || GetSiteProfileXMLName(siteprofilesection.name) || 'spage" />\n'
-          || '  </apply>\n\n';
-    }
+    //IF (NOT siteprofilesection.page_only)
+    //{
+    //  xml := xml
+    //      || '  <apply>\n'
+    //      || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
+    //      || '    <bodyrenderer library="' || siteprofilesection.lib || '.whlib" objectname="' || GetSiteProfileXMLName(siteprofilesection.lib) || 'page" />\n'
+    //      || '  </apply>\n\n';
+    //}
 
-    xml := xml
-          || '  <apply>\n';
+//    xml := xml
+//          || '  <apply>\n';
 
-    IF (NOT siteprofilesection.page_only)
-      xml := xml ||
-      `    <and>
-          <not>
-            <to type="index" parenttype="${xmlns_folder}" />
-          </not>
-          <to type="file" parenttype="${xmlns_folder}" filetype="${xmlns_file}" />
-        </and>
-      `;
-    ELSE
-      xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
+////    IF (NOT siteprofilesection.page_only AND siteprofilesection.use_rtd)
+////      xml := xml ||
+////      `.   <to type="file" parenttype="${xmlns_folder}" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" />
+////`;
+////    ELSE
 
-    IF (siteprofilesection.page_only)
-    {
-      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />` || '\n';
-    }
+//    xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
 
-    IF (filetype_is_rtd OR siteprofilesection.use_rtd)
-      xml := xml || '    <setobjecteditor name="publisher:editdocument" />\n';
-    ELSE
-      xml := xml || '    <setobjecteditor name="publisher:propertydialog" />\n';
+//    IF (siteprofilesection.page_only)
+//    {
+//      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />` || '\n';
+//    }
 
-    xml := xml
-        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '" />\n'
-        || '  </apply>\n\n';
+//    IF (filetype_is_rtd OR siteprofilesection.use_rtd)
+//      xml := xml || '    <xsetobjecteditor name="publisher:editdocument" />\n';
+//    ELSE
+//      xml := xml || '    <yssetobjecteditor name="publisher:propertydialog" />\n';
+
+//    xml := xml
+//        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '" />\n'
+//        || '  </apply>\n\n';
   //}
 
   RETURN xml;
@@ -772,12 +735,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
       o := o || `            , body := PTR webdesign->OpenRTDFromFile(webdesign->targetobject)->RenderAllObjects()
 `;
 
-    FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, `${siteprofilesection.lib}data`))
+    FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, `${siteprofilesection.lib}data.`))
     {
-//      abort(siteprofilesection.members);
-      IF (siteprofmember.value = "")
-        CONTINUE;
-
       loadlibs := loadlibs CONCAT siteprofmember.loadlibs;
 
       IF (siteprofmember.type = "image")
@@ -837,9 +796,13 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 `;
     }
 
-    o := o || '    OBJECT ' || siteprofilesection.lib || 'type := OpenWHFSType("' || baseurl || 'filetype/' || siteprofilesection.lib || '");\n\n';
+    o := o || '    OBJECT ' || siteprofilesection.lib || 'type := OpenWHFSType("' || baseurl || 'filetype/' || siteprofilesection.lib || '");\n';
 
-    IF (NOT siteprofilesection.use_rtd)
+    IF (siteprofilesection.use_rtd)
+    {
+      o := o || '\n';
+    }
+    ELSE
     {
       IF (filetype_is_rtd)
         o := o || '    OBJECT rtdtype := OpenWHFSType("http://www.webhare.net/xmlns/publisher/richdocumentfile");\n';
@@ -856,7 +819,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
       o := o || '           FROM system.fs_objects\n'
              || '          WHERE parent = this->webdesign->targetfolder->id\n'
              || '                AND type = ' || (filetype_is_rtd ? 'rtd' : name) || 'type->id\n'
-             || '                AND id != this->webdesign->targetfolder->indexdoc\n'
+             //|| '                AND id != this->webdesign->targetfolder->indexdoc\n'
              || '                AND title != ""\n'
              || '                AND indexurl != ""\n'
              || '       ORDER BY ordering, ToUpperCase(title), id;\n'
@@ -872,8 +835,11 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
       o := o || '    ' || siteprofilesection.lib || ' := \n'
         || '        SELECT *\n';
 
-      FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, '???'))
+      FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, ""))
       {
+        //IF (siteprofmember.value = "")
+        //  CONTINUE;
+
         loadlibs := loadlibs CONCAT siteprofmember.loadlibs;
         o := o || WS(13) || ', ' || siteprofmember.name || ' := ' || siteprofmember.value || '\n';
         //SWITCH (siteprofmember.type)
@@ -1127,7 +1093,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibraryEmbObj(STRING baseurl, RECORD s
 
   STRING ARRAY loadlibs := [ 'mod::publisher/lib/widgets.whlib' ];
 
-  RECORD ARRAY extradata := GenerateExtraMemberCellsForWhlib(siteprofilesection, 'this->data');
+  RECORD ARRAY extradata := GenerateExtraMemberCellsForWhlib(siteprofilesection, 'this->data.');
 
   //FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
   //{
@@ -1276,6 +1242,13 @@ STRING FUNCTION CapitalizeFirstChar(STRING text)
   RETURN ToUpperCase(Left(text,1)) || Substring(text, 1);
 }
 
+STRING FUNCTION CapitalizeFirstCharForForm(STRING text)
+{
+  text := CapitalizeFirstChar(text);
+  RETURN Substitute(text, "form", "Form");
+}
+
+// generates whlb for special members, like images, datetimes, RTDs, etc
 RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRING recordname)
 {
   RECORD ARRAY returnmembers; // type, loadlibs, name, value
@@ -1286,6 +1259,7 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
                          , loadlibs := STRING[]
                          , value := ""
                          ];
+
     SWITCH (siteprofmember.type)
     {
       CASE "datetime"
@@ -1300,15 +1274,15 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
       {
         addrec := [ ...addrec
                   , loadlibs := ['mod::system/lib/cache.whlib']
-                  , value := `WrapCachedImage(${recordname}.${siteprofmember.name}, [ method := "fit", setwidth := 1920, format := "image/jpeg" ])`
+                  , value := `WrapCachedImage(${recordname}${siteprofmember.name}, [ method := "fit", setwidth := 1920, format := "image/jpeg" ])`
                   ];
       }
       CASE "array"
       {
-        INSERT [ ...addrec
-               , name := siteprofmember.name
-               , value := `(SELECT * FROM this->data.${siteprofmember.name})`
-               ] INTO returnmembers AT END;
+        addrec := [ ...addrec
+                  , name := siteprofmember.name
+                  , value := `(SELECT * FROM ${recordname}${siteprofmember.name})`
+                  ];
       }
       CASE "richdocument"
       {
@@ -1316,22 +1290,153 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
                           ? `${screenbaseurl}rtd/${siteprofile.lib}`
                           : "your-rtd-type-url";
 
-        INSERT [ ...addrec
-               , name := siteprofmember.name
-               , value := `PTR webdesign->OpenRTD(${recordname}.${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
-               ] INTO returnmembers AT END;
+        addrec := [ ...addrec
+                  , name := siteprofmember.name
+                  , value := `PTR webdesign->OpenRTD(${recordname}${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
+                  ];
       }
       CASE "intextlink"
       {
-        INSERT [ ...addrec
-               , name := siteprofmember.name
-               , value := `GetInTextLinkTarget(${siteprofmember.name})`
-               , loadlibs := ['mod::publisher/lib/publisher.whlib']
-               ] INTO returnmembers AT END;
+        addrec := [ ...addrec
+                  , name := siteprofmember.name
+                  , value := `GetInTextLinkTarget(${siteprofmember.name})`
+                  , loadlibs := ['mod::publisher/lib/publisher.whlib']
+                  ];
       }
     }
 
-    INSERT addrec INTO returnmembers AT END;
+    IF (addrec.value != "")
+      INSERT addrec INTO returnmembers AT END;
   }
+
   RETURN returnmembers;
+}
+
+PUBLIC STRING FUNCTION GenerateFormFormDefXML(RECORD data)
+{
+  STRING o :=
+`<?xml version="1.0" ?>
+<formdefinitions xmlns="http://www.webhare.net/xmlns/publisher/forms">
+  <form name="${ToLowerCase(data.form_tag)}"
+        library="${ToLowerCase(data.form_tag)}.whlib"
+        objectname="${ToLowerCase(data.form_tag)}"
+        jshandler="<module>:${ToLowerCase(data.form_tag)}"
+        >
+    <page>
+      <textedit name="name" title="Naam" required="true" />
+      <textedit name="email" title="E-mailadres" required="true" />
+    </page>
+  </form>
+</formdefinitions>
+`;
+
+  RETURN o;
+}
+
+PUBLIC STRING FUNCTION GenerateJavaScriptForm(RECORD data) // form_tag
+{
+  STRING o :=
+`import * as dompack from 'dompack';
+import { RPCFormBase, registerHandler } from '@mod-publisher/js/forms';
+
+class ${CapitalizeFirstCharForForm(data.form_tag)} extends RPCFormBase {
+  constructor(node) {
+    super(node);
+
+    if (dompack.debugflags['debug'])
+      this.invokeRPC('debugprefill');
+  }
+}
+
+dompack.onDomReady(() => {
+});
+
+registerHandler('<module>:${ToLowerCase(data.form_tag)}', node => new ${CapitalizeFirstCharForForm(data.form_tag)}(node));
+`;
+
+  RETURN o;
+}
+
+PUBLIC STRING FUNCTION GenerateFormLibrary(RECORD data)
+{
+  STRING o :=
+`<?wh
+
+LOADLIB "wh::files.whlib";
+
+LOADLIB "mod::publisher/lib/forms/base.whlib";
+
+LOADLIB "mod::system/lib/mailer.whlib";
+
+
+PUBLIC OBJECTTYPE ${CapitalizeFirstCharForForm(data.form_tag)} EXTEND FormBase
+<
+  MACRO NEW()
+  {
+  }
+
+  PUBLIC MACRO RPC_DebugPrefill()
+  {
+    ^name->value := "Pietje";
+    ^email->value := \`info+${Random(0, 9999999)}@example.com\`;
+  }
+
+  RECORD FUNCTION Submit(RECORD extradata)
+  {
+    RECORD result := [ success := FALSE
+                     ];
+
+    OBJECT work := this->BeginWork();
+
+    // e-mail confirmation
+    RECORD ARRAY fields :=
+       [[ title := "Naam", value := ^name->value ]
+       ,[ title := "E-mail", value := ^email->value ]
+       ];
+
+    STRING msg := "<br />";
+    FOREVERY (RECORD field FROM fields)
+      IF (field.value != "")
+        msg := msg || "<b>" || EncodeHTML(field.title) || "</b>: " || EncodeHTML(field.value) || "<br /><br />";
+
+    OBJECT mail := MakeEmailComposer();
+    mail->origin := "<module>_${ToLowerCase(data.form_tag)}";
+    //mail->mailfrom := "info@webwerf.nl";
+    mail->mailto := ["info@webwerf.nl"];
+    mail->subject := "${CapitalizeFirstCharForForm(data.form_tag)} ingevoerd";
+    mail->SetRichBody(StringToBlob(msg), "text/html");
+    mail->QueueMailInWork();
+
+    work->Finish();
+
+    result.success := TRUE;
+
+    RETURN result;
+  }
+>;
+`;
+
+  RETURN o;
+}
+
+PUBLIC STRING FUNCTION GenerateFormWitty(RECORD data)
+{
+  STRING o :=
+`[component ${ToLowerCase(data.form_tag)}]
+  <div class="${ToLowerCase(data.form_tag)}">
+    <form class="wh-form" [${ToLowerCase(data.form_tag)}.formattributes]>
+      <div class="wh-form__page">
+        [${ToLowerCase(data.form_tag)}.name.render]
+        [${ToLowerCase(data.form_tag)}.email.render]
+      </div>
+      <div class="wh-form__page" data-wh-form-pagerole="thankyou">
+        Bedankt voor het invullen van het formulier
+      </div>
+      [${ToLowerCase(data.form_tag)}.formrendernav]
+    </form>
+  </div>
+[/component]
+`;
+
+  RETURN o;
 }

@@ -11,6 +11,8 @@ BOOLEAN initdone;
 
 PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 <
+  BOOLEAN initdone;
+
   MACRO Init(RECORD data)
   {
     IF ("debug" IN data.params)
@@ -31,10 +33,13 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->use_rtd->value := CellExists(prefillsettings, "use_rtd") AND prefillsettings.use_rtd;
       this->use_tids->value := CellExists(prefillsettings, "use_tids") AND prefillsettings.use_tids;
       this->add_custom_rtdtype->value := CellExists(prefillsettings, "add_custom_rtdtype") AND prefillsettings.add_custom_rtdtype;
+      this->form_tag->value := CellExists(prefillsettings, "form_tag") ? prefillsettings.form_tag : "";
       //this->page_only->value := CellExists(prefillsettings, "page_only") AND prefillsettings.page_only;
       //this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
 
       this->DoGenerateCode();
+
+      this->initdone := TRUE;
     }
 
     this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
@@ -92,14 +97,15 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
   MACRO OnAnyChange()
   {
     //this->index_is_rtd->enabled := NOT this->use_rtd->value AND NOT this->page_only->value;
-    this->use_rtd->enabled := this->type->value != "folderwithindex";
+    //this->use_rtd->enabled := this->type->value != "folderwithindex";
 
     IF (NOT debug AND initdone)
     {
       this->DoSaveSettings();
     }
 
-    this->DoGenerateCode();
+    IF (this->initdone)
+      this->DoGenerateCode();
   }
 
   MACRO DoGenerateCode()
@@ -127,7 +133,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     RECORD data := [ name := GetSiteProfileXMLName(this->itemtitle->value)
                    , title := this->itemtitle->value//Substitute(this->itemtitle->value, " ", "")
                    , originaltitle := this->itemtitle->value
-                   , filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), isrtd := this->use_rtd->value ]]
+                   //, filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), isrtd := this->use_rtd->value ]]
                    , foldertype := [ title := this->CapitalizeFirstChar(this->itemtitle->value) ]
                    , members := members
                    , lib := this->lib->value
@@ -136,23 +142,20 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    , add_custom_rtdtype := this->add_custom_rtdtype->value
                    , page_only := this->type->value = "pageonly"
                    //, index_is_rtd := this->index_is_rtd->value
-                   , use_rtd := this->type->value = "folderwithindex" OR (this->type->value = "pageonly" AND this->use_rtd->value)
+                   , use_rtd := this->use_rtd->value
                    ];
 
     IF (this->type->value = "folderwithindex")
     {
-      UPDATE data.filetypes SET isrtd := TRUE;
+      //UPDATE data.filetypes SET isrtd := TRUE;
 
-      INSERT CELL filetype_is_rtd := TRUE INTO data;
+      //INSERT CELL filetype_is_rtd := TRUE INTO data;
     }
 
     //IF (this->index_is_rtd->value = TRUE)
     //  INSERT CELL index_is_rtd := TRUE INTO data;
 
-    this->GenerateSiteProfileCode(data);
-    this->GenerateLibCode(data);
-    this->GenerateWittyCode(data);
-
+    this->GenerateCode(data);
     this->GenerateScreenOnlyCode(data);
   }
 
@@ -202,58 +205,45 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     RETURN siteprofmember;
   }
 
-  MACRO GenerateSiteProfileCode(RECORD data)
+  MACRO GenerateCode(RECORD data)
   {
     data := this->ConvertToExpectedData(data);
+
     this->siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
-
-    RECORD embdata := [ ...data, name := this->lib->value ];
-    this->emb_siteprlcode->value := GenerateSiteProfileEmbObj(this->baseurl->value, embdata);
-  }
-
-  MACRO GenerateLibCode(RECORD data)
-  {
-    data := this->ConvertToExpectedData(data);
     this->libcode->value := GenerateSiteProfileLibrary(this->baseurl->value, data);
-
-    RECORD embdata := [ ...data, name := this->lib->value ];
-    this->emb_libcode->value := GenerateSiteProfileLibraryEmbObj(this->baseurl->value, embdata);
-  }
-
-  MACRO GenerateWittyCode(RECORD data)
-  {
-    data := this->ConvertToExpectedData(data);
     this->wittycode->value := GenerateSiteProfileWitty(data);
 
     RECORD embdata := [ ...data, name := this->lib->value ];
+    this->emb_siteprlcode->value := GenerateSiteProfileEmbObj(this->baseurl->value, embdata);
+    this->emb_libcode->value := GenerateSiteProfileLibraryEmbObj(this->baseurl->value, embdata);
     this->emb_wittycode->value := GenerateSiteProfileWittyEmbObj(embdata);
+
+    RECORD formdata := [ ...data, form_tag := `${this->form_tag->value}form` ];
+    this->form_formdefcode->value := GenerateFormFormDefXML(formdata);
+    this->form_libcode->value := GenerateFormLibrary(formdata);
+    this->form_wittycode->value := GenerateFormWitty(formdata);
+    this->form_jscode->value := GenerateJavaScriptForm(formdata);
   }
 
   MACRO GenerateScreenOnlyCode(RECORD data)
   {
-    data.filetypes := DEFAULT RECORD ARRAY;
+    //data.filetypes := DEFAULT RECORD ARRAY;
     data.foldertype := DEFAULT RECORD;
     data.screen_only := TRUE;
 
     data := this->ConvertToExpectedData(data);
 
-    this->screen_siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
+    //this->screen_siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
   }
 
-  MACRO DoSaveSettings()
+  MACRO DoSaveSettings() // save settings as HSON
   {
-    // save settings as HSON
-    RECORD settings := [ baseurl := this->baseurl->value
-                       , itemtitle := this->itemtitle->value
-                       , lib := this->lib->value
-                       , members := this->members->value
-                       , type := this->type->value
-                       , use_rtd := this->use_rtd->value
-                       , use_tids := this->use_tids->value
-                       , add_custom_rtdtype := this->add_custom_rtdtype->value
-                       //, page_only := this->page_only->value
-                       //, index_is_rtd := this->index_is_rtd->value
-                       ];
+    STRING ARRAY settings_sa :=
+        ["baseurl","itemtitle","lib","members","type","use_rtd","use_tids","add_custom_rtdtype","form_tag"];
+
+    RECORD settings;
+    FOREVERY (STRING setting FROM settings_sa)
+      settings := CellInsert(settings, setting, GetMember(this, setting)->value);
 
     OBJECT work := this->BeginWork();
     SetRegistryKey(-1, "codegenerator.siteprofiles.settings", EncodeHSON(settings));
@@ -290,6 +280,25 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                                                 , add_siteprl := scr->add_siteprl
                                                 , add_rtdtype := `${this->baseurl->value}embeddedobjects/${this->lib->value}`
                                                 ])->RunModal();
+    }
+  }
+
+  MACRO DoCreateFormFolder()
+  {
+    OBJECT scr := this->LoadScreen(".createformfolder", [ libcode := this->form_libcode->value
+                                                        , wittycode := this->form_wittycode->value
+                                                        , formdefcode := this->form_formdefcode->value
+                                                        , jscode := this->form_jscode->value
+                                                        , tag := this->form_tag->value
+                                                        ]);
+
+    IF (scr->RunModal() = "ok")
+    {
+      scr->LoadScreen(".templatecreatedform", [ add_whlib := scr->add_whlib
+                                              , add_siteprl := scr->add_siteprl
+                                              , add_witty := scr->add_witty
+                                              , add_js := scr->add_js
+                                              ])->RunModal();
     }
   }
 >;
@@ -364,7 +373,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     this->UpdateExplanation();
   }
 
-  MACRO UpdateExplanation()
+  PUBLIC MACRO UpdateExplanation()
   {
     RECORD templatesettings := GetTemplateSettings(this->sitedesign->value, this->module->value);
     this->explanation->value := GetTid("codegenerator:createtemplate.explanation", this->tag, templatesettings.web_site_design);
@@ -474,7 +483,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     this->UpdateExplanation();
   }
 
-  MACRO UpdateExplanation()
+  PUBLIC MACRO UpdateExplanation()
   {
     RECORD templatesettings := this->GetTemplateSettings();
     this->explanation->value := GetTid("codegenerator:createembeddedobjectfolder.explanation", this->tag, templatesettings.web_site_design);
@@ -581,6 +590,100 @@ PUBLIC OBJECTTYPE TemplateCreatedEmbObj EXTEND TolliumScreenBase
   }
 >;
 
+PUBLIC OBJECTTYPE CreateFormFolder EXTEND TolliumScreenBase
+<
+  RECORD ARRAY sitedesigns;
+  STRING libcode;
+  STRING wittycode;
+  STRING formdefcode;
+  STRING jscode;
+  STRING tag;
+
+  PUBLIC STRING add_whlib;
+  PUBLIC STRING add_siteprl;
+  PUBLIC STRING add_witty;
+  PUBLIC STRING add_js;
+
+  MACRO Init(RECORD data)
+  {
+    this->libcode := data.libcode;
+    this->wittycode := data.wittycode;
+    this->formdefcode := data.formdefcode;
+    this->jscode := data.jscode;
+    this->tag := data.tag;
+
+    this->module->options := __GetWebDesigns();
+
+    this->UpdateExplanation();
+  }
+
+  PUBLIC MACRO UpdateExplanation()
+  {
+    RECORD templatesettings := this->GetTemplateSettings();
+    this->explanation->value := GetTid("codegenerator:createformfolder.explanation", ToLowerCase(this->tag || "form"), templatesettings.web_site_design);
+  }
+
+  MACRO OnModuleChange()
+  {
+    OnModuleChange(this);
+  }
+
+  RECORD FUNCTION GetTemplateSettings()
+  {
+    RETURN GetTemplateSettings(this->sitedesign->value, this->module->value);
+  }
+
+  BOOLEAN FUNCTION Submit()
+  {
+    OBJECT work := this->BeginWork();
+
+    RECORD settings := this->GetTemplateSettings();
+
+    STRING tag := ToLowerCase(this->tag);
+
+    // 1) create a folder 'TAG' in src/
+    STRING newfolderpath := settings.sitedesign_path || tag || "form/";
+    RECORD ARRAY newfoldercontents := ReadDiskDirectory(newfolderpath, "*");
+    IF (Length(newfoldercontents) > 0) // FIXME: better way to check if a folder exists?
+    {
+      work->AddError(`Directory '${newfolderpath} already exists and we will not overwrite it`);
+      RETURN work->Finish();
+    }
+
+    CreateDiskDirectory(newfolderpath, TRUE);
+
+    STRING libcode := Substitute(this->libcode, "<module>", this->module->value);
+    STRING wittycode := Substitute(this->wittycode, "<module>", this->module->value);
+    STRING formdefcode := Substitute(this->formdefcode, "<module>", this->module->value);
+    STRING jscode := Substitute(this->jscode, "<module>", this->module->value);
+
+    // 2) create WHLIB, Witty, formdef (XML) and JS (es) files in the new folder
+    // 2a) WHLIB
+    CreateDiskFileFromBlob(newfolderpath || tag || "form.whlib", TRUE, FALSE, StringToBlob(libcode));
+    CreateDiskFileFromBlob(newfolderpath || tag || "form.witty", TRUE, FALSE, StringToBlob(wittycode));
+    CreateDiskFileFromBlob(newfolderpath || tag || "form.formdef.xml", TRUE, FALSE, StringToBlob(formdefcode));
+    CreateDiskFileFromBlob(newfolderpath || tag || "form.es", TRUE, FALSE, StringToBlob(jscode));
+
+    this->add_whlib := `${tag}form := webdesign->GetWittyDataForForm("${tag}form")`;
+    this->add_siteprl := `<formdefinitions path="${tag}form/${tag}form.formdef.xml" />`;
+    this->add_witty := `[embed ../../${tag}form/${tag}form.witty:${tag}form]`;
+    this->add_js := `import './${tag}form/${tag}form';`;
+
+    RETURN work->Finish();
+  }
+>;
+
+PUBLIC OBJECTTYPE TemplateCreatedForm EXTEND TolliumScreenBase
+<
+  MACRO Init(RECORD data)
+  {
+    this->add_whlib->value := data.add_whlib;
+    this->add_siteprl->value := data.add_siteprl;
+    this->add_witty->value := data.add_witty;
+    this->add_js->value := data.add_js;
+  }
+>;
+
 RECORD ARRAY FUNCTION __GetWebDesigns()
 {
   // collect webdesigns
@@ -620,4 +723,15 @@ RECORD FUNCTION GetTemplateSettings(STRING sitedesign, STRING module)
   RETURN [ web_site_design := web_site_design
          , sitedesign_path := GetModuleInstallationRoot(module) || web_site_design
          ];
+}
+
+MACRO OnModuleChange(OBJECT screenbase)
+{
+  RECORD selected_module := SELECT * FROM screenbase->module->options WHERE tolliumselected;
+
+  screenbase->sitedesign->options := selected_module.webdesigns;
+
+  screenbase->sitedesign->readonly := Length(screenbase->sitedesign->options) = 1;
+
+  screenbase->UpdateExplanation();
 }

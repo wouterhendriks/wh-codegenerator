@@ -6,6 +6,9 @@
   <textgroup gid="createtemplate">   <!-- createtemplate -->
     <text tid="explanation">This action will perform these tasks:<br/><br/>1) create a folder '<param p="1"/>' in <param p="2"/>pages/<br/><br/>2) create WHLIB, Witty, SCSS, siteprl and JS (ES6/7) files in this new folder</text>
   </textgroup>
+  <textgroup gid="createformfolder">   <!-- createformfolder -->
+    <text tid="explanation">This action will perform these tasks:<br/><br/>1) create a folder '<param p="1"/>' in /modulename/<param p="2" /><br/><br/>2) create WHLIB, Witty, formdef (.formdef.xml) and JS (.es) files in this new folder</text>
+  </textgroup>
   <textgroup gid="siteprofiles">   <!-- siteprofiles -->
     <text tid="createembeddedobjectfolder">Create embedded object</text>
     <text tid="createtemplate">Create template</text>
