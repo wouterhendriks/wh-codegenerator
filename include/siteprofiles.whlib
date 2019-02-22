@@ -732,7 +732,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 `;
 
     IF (siteprofilesection.use_rtd)
-      o := o || `            , body := PTR webdesign->OpenRTDFromFile(webdesign->targetobject)->RenderAllObjects()
+      o := o || `            , body := PTR webdesign->OpenRTDFromFile(webdesign->contentobject)->RenderAllObjects()
 `;
 
     FOREVERY (RECORD siteprofmember FROM GenerateExtraMemberCellsForWhlib(siteprofilesection, `${siteprofilesection.lib}data.`))
@@ -867,7 +867,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     //o := o || '\n';
 
     IF (index_is_rtd)
-      o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->targetobject);\n\n';
+      o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->contentobject);\n\n';
 
     o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || '\n';
 
@@ -891,7 +891,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
     o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || 'data\n';
 
     IF (filetype_is_rtd)
-      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->targetobject->id)->RenderAllObjects()\n';
+      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->contentobject->id)->RenderAllObjects()\n';
 
     o := o || '                           ];\n'
            || '  }\n';
@@ -1346,6 +1346,10 @@ class ${CapitalizeFirstCharForForm(data.form_tag)} extends RPCFormBase {
     if (dompack.debugflags['debug'])
       this.invokeRPC('debugprefill');
   }
+
+  //getFormExtraSubmitData() {
+  //  return { x: 'y' };
+  //}
 }
 
 dompack.onDomReady(() => {
