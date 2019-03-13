@@ -38,7 +38,8 @@
                 <textedit name="lib" width="1pr" onchange="onanychange" title="Library tag" />
                 <select name="type" type="radio" title="Code type" onchange="onanychange">
                   <option rowkey="folderwithindex" title="Overview folder with index file and details page" />
-                  <option rowkey="pageonly" title="Custom page only" />
+                  <option rowkey="page_only" title="Custom page only" />
+                  <option rowkey="embeddedobject" title="Embedded object" />
                 </select>
                 <!--
                 <line layout="left">
@@ -52,7 +53,13 @@
                   <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
                 </line>
                 <line layout="left">
-                  <checkbox name="add_custom_rtdtype" title="" label="Use custom RTD type for &lt;richdocument rtdtype&gt; attributes" onchange="onanychange" value="true" />
+                  <checkbox name="add_custom_rtdtype" title="" label="Add custom RTD type (added as separate node and to &lt;richdocument rtdtype&gt; attributes)" onchange="onanychange" value="true" />
+                </line>
+                <line layout="left">
+                  <checkbox name="is_prebuilt_page" title="" label="Add page as prebuilt page (doesn't add members currently)" onchange="onanychange" />
+                </line>
+                <line layout="left">
+                  <checkbox name="prebuilt_page_is_static" title="" label="Prebuilt page is static" onchange="onanychange" />
                 </line>
                 <!--
                 <line layout="left">
@@ -169,6 +176,9 @@
         <line layout="left">
           <checkbox composition="row" cellname="required" title="" label="This is a required field" />
         </line>
+        <line layout="left">
+          <checkbox composition="row" cellname="owntab" title="" label="Put this field in its own tab" />
+        </line>
       </box>
       <tabs type="server" height="1pr">
         <tab>
@@ -265,6 +275,13 @@
 
   <screen name="createtemplate" allowresize="true" minwidth="500px" gid=".createtemplate">
     <body>
+      <select type="checkbox" name="addtypes" title="Add">
+        <option rowkey="siteprl" title="Site profile (.siteprl)" selected="true" />
+        <option rowkey="whlib" title="Library (.whlib)" selected="true" />
+        <option rowkey="witty" title="Template (.witty)" selected="true" />
+        <option rowkey="javascript" title="JavaScript (.es)" selected="true" />
+        <option rowkey="css" title="CSS (.scss)" selected="true" />
+      </select>
       <select public="true" name="module" type="pulldown" onchange="onmodulechange" />
       <select public="true" name="sitedesign" type="pulldown" onchange="onmodulechange" />
       <hr />
@@ -291,6 +308,13 @@
 
   <screen name="createembeddedobjectfolder" allowresize="true" minwidth="500px">
     <body>
+      <select type="checkbox" name="addtypes" title="Add">
+        <option rowkey="siteprl" title="Site profile (.siteprl)" selected="true" />
+        <option rowkey="whlib" title="Library (.whlib)" selected="true" />
+        <option rowkey="witty" title="Template (.witty)" selected="true" />
+        <option rowkey="javascript" title="JavaScript (.es)" selected="true" />
+        <option rowkey="css" title="CSS (.scss)" selected="true" />
+      </select>
       <select public="true" name="module" type="pulldown" onchange="onmodulechange" title="Module" />
       <select public="true" name="sitedesign" type="pulldown" onchange="onmodulechange" title="Site design" />
       <hr />

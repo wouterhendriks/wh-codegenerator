@@ -25,17 +25,11 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     IF (RecordExists(prefillsettings))
     {
-      this->type->value := prefillsettings.type;
-      this->baseurl->value := prefillsettings.baseurl;
-      this->itemtitle->value := prefillsettings.itemtitle;
-      this->lib->value := prefillsettings.lib;
-      this->members->value := SELECT * FROM prefillsettings.members;
-      this->use_rtd->value := CellExists(prefillsettings, "use_rtd") AND prefillsettings.use_rtd;
-      this->use_tids->value := CellExists(prefillsettings, "use_tids") AND prefillsettings.use_tids;
-      this->add_custom_rtdtype->value := CellExists(prefillsettings, "add_custom_rtdtype") AND prefillsettings.add_custom_rtdtype;
-      this->form_tag->value := CellExists(prefillsettings, "form_tag") ? prefillsettings.form_tag : "";
-      //this->page_only->value := CellExists(prefillsettings, "page_only") AND prefillsettings.page_only;
-      //this->index_is_rtd->value := CellExists(prefillsettings, "index_is_rtd") AND prefillsettings.index_is_rtd;
+      FOREVERY (STRING setting FROM ["type","baseurl","itemtitle","lib","members","use_rtd","use_tids","add_custom_rtdtype","form_tag","is_prebuilt_page","prebuilt_page_is_static"])
+      {
+        IF (CellExists(prefillsettings, setting))
+          GetMember(this, setting)->value := GetCell(prefillsettings, setting);
+      }
 
       this->DoGenerateCode();
 
@@ -98,6 +92,10 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
   {
     //this->index_is_rtd->enabled := NOT this->use_rtd->value AND NOT this->page_only->value;
     //this->use_rtd->enabled := this->type->value != "folderwithindex";
+    this->prebuilt_page_is_static->enabled := ^type->value IN ["folderwithindex","page_only"] AND this->is_prebuilt_page->value;
+
+    ^use_rtd->enabled := ^type->value IN ["folderwithindex","page_only"];
+    ^is_prebuilt_page->enabled := ^type->value IN ["folderwithindex","page_only"];
 
     IF (NOT debug AND initdone)
     {
@@ -136,14 +134,15 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    //, filetypes := [[ title := this->CapitalizeFirstChar(this->itemtitle->value), isrtd := this->use_rtd->value ]]
                    , foldertype := [ title := this->CapitalizeFirstChar(this->itemtitle->value) ]
                    , members := members
-                   , lib := this->lib->value
                    , screen_only := FALSE
-                   , use_tids := this->use_tids->value
-                   , add_custom_rtdtype := this->add_custom_rtdtype->value
-                   , page_only := this->type->value = "pageonly"
-                   //, index_is_rtd := this->index_is_rtd->value
-                   , use_rtd := this->use_rtd->value
+                   , page_only := this->type->value = "page_only"
+                   , codetype := ^type->value
                    ];
+
+    FOREVERY (STRING setting FROM ["lib","use_rtd","use_tids","add_custom_rtdtype","is_prebuilt_page","prebuilt_page_is_static"])
+    {
+      data := CellInsert(data, setting, GetMember(this, setting)->value);
+    }
 
     IF (this->type->value = "folderwithindex")
     {
@@ -239,7 +238,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
   MACRO DoSaveSettings() // save settings as HSON
   {
     STRING ARRAY settings_sa :=
-        ["baseurl","itemtitle","lib","members","type","use_rtd","use_tids","add_custom_rtdtype","form_tag"];
+        ["baseurl","itemtitle","lib","members","type","use_rtd","use_tids","add_custom_rtdtype","form_tag","is_prebuilt_page","prebuilt_page_is_static"];
 
     RECORD settings;
     FOREVERY (STRING setting FROM settings_sa)
@@ -400,49 +399,63 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
 
     // 2) create WHLIB, Witty, SCSS and JS (.es) files in the new folder
     // 2a) WHLIB
-    STRING whlib := this->libcode;
-    INTEGER addpagenamepos := SearchSubString(ToUpperCase(whlib), "THIS->ISINDEX := WEBDESIGN->TARGETFOLDER->INDEXDOC = WEBDESIGN->TARGETOBJECT->ID");
-    IF (addpagenamepos > -1)
+    IF ("whlib" IN this->addtypes->value)
     {
-      whlib := Left(whlib, addpagenamepos)
-            || 'INSERT "page-' || this->tag || '" INTO webdesign->htmlclasses AT END;\n\n    '
-            || SubString(whlib, addpagenamepos);
+      STRING whlib := this->libcode;
+      INTEGER addpagenamepos := SearchSubString(ToUpperCase(whlib), "THIS->ISINDEX := WEBDESIGN->TARGETFOLDER->INDEXDOC = WEBDESIGN->TARGETOBJECT->ID");
+      IF (addpagenamepos > -1)
+      {
+        whlib := Left(whlib, addpagenamepos)
+              || 'INSERT "page-' || this->tag || '" INTO webdesign->htmlclasses AT END;\n\n    '
+              || SubString(whlib, addpagenamepos);
+      }
+
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".whlib", FALSE, FALSE, StringToBlob(whlib));
     }
 
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".whlib", TRUE, FALSE, StringToBlob(whlib));
-
     // 2b) Witty
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
+    IF ("witty" IN this->addtypes->value)
+    {
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", FALSE, FALSE, StringToBlob(this->wittycode));
+    }
 
     // 2c) SCSS
-    STRING scss := "// @import '../../shared/css/vars';\n";
-
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
+    IF ("css" IN this->addtypes->value)
+    {
+      STRING scss := "// @import '../../shared/css/vars';\n";
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", FALSE, FALSE, StringToBlob(scss));
+    }
 
     // 2d) JS
-    STRING js := "import './" || this->tag || ".scss';\n"
-              || "\n"
-              || "import * as dompack from 'dompack';\n"
-              || "\n"
-              || "dompack.onDomReady(() => {\n"
-              || "  if (!document.documentElement.classList.contains('page-" || this->tag || "'))\n"
-              || "    return;\n"
-              || "\n"
-              || "  console.info('page: " || this->tag || "');\n"
-              || "});\n";
+    IF ("javascript" IN this->addtypes->value)
+    {
+      STRING js := "import './" || this->tag || ".scss';\n"
+                || "\n"
+                || "import * as dompack from 'dompack';\n"
+                || "\n"
+                || "dompack.onDomReady(() => {\n"
+                || "  if (!document.documentElement.classList.contains('page-" || this->tag || "'))\n"
+                || "    return;\n"
+                || "\n"
+                || "  console.info('page: " || this->tag || "');\n"
+                || "});\n";
 
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".es", TRUE, FALSE, StringToBlob(js));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".es", FALSE, FALSE, StringToBlob(js));
+    }
 
     // 2e) site profile
-    STRING siteprl := '<?xml version="1.0" encoding="UTF-8" ?>\n'
-                   || '<siteprofile xmlns="http://www.webhare.net/xmlns/publisher/siteprofile"\n'
-                   || '             >\n'
-                   || '\n'
-                   || this->siteprlcode || '\n'
-                   || '\n'
-                   || '</siteprofile>\n';
+    IF ("siteprl" IN this->addtypes->value)
+    {
+      STRING siteprl := '<?xml version="1.0" encoding="UTF-8" ?>\n'
+                     || '<siteprofile xmlns="http://www.webhare.net/xmlns/publisher/siteprofile"\n'
+                     || '             >\n'
+                     || '\n'
+                     || this->siteprlcode || '\n'
+                     || '\n'
+                     || '</siteprofile>\n';
 
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", TRUE, FALSE, StringToBlob(siteprl));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", FALSE, FALSE, StringToBlob(siteprl));
+    }
 
     this->add_js := "import './pages/" || this->tag || "/" || this->tag || "';";
     this->add_siteprl := '<applysiteprofile fullpath="pages/' || this->tag || '/' || this->tag || '.siteprl" />';
@@ -530,45 +543,56 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     // 1) create a folder 'TAG' in src/embeddedobjects/
     STRING newfolderpath := settings.sitedesign_path || "embeddedobjects/" || this->tag || "/";
     RECORD ARRAY newfoldercontents := ReadDiskDirectory(newfolderpath, "*");
-    IF (Length(newfoldercontents) > 0) // FIXME: better way to check if a folder exists?
-    {
-      work->AddError(`Directory '${newfolderpath} already exists and we will not overwrite it`);
-      RETURN work->Finish();
-    }
+    //IF (Length(newfoldercontents) > 0) // FIXME: better way to check if a folder exists?
+    //{
+    //  work->AddError(`Directory '${newfolderpath} already exists and we will not overwrite it`);
+    //  RETURN work->Finish();
+    //}
 
     CreateDiskDirectory(newfolderpath, TRUE);
 
     // 2) create WHLIB, Witty, SCSS and JS (.es) files in the new folder
     // 2a) WHLIB
-    STRING whlib := this->libcode;
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".whlib", TRUE, FALSE, StringToBlob(whlib));
+    IF ("whlib" IN this->addtypes->value)
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".whlib", TRUE, FALSE, StringToBlob(this->libcode));
 
     // 2b) Witty
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
+    IF ("witty" IN this->addtypes->value)
+    {
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".witty", TRUE, FALSE, StringToBlob(this->wittycode));
+    }
 
-    // 2c) SCSS
-    STRING scss :=
+    IF ("css" IN this->addtypes->value)
+    {
+      // 2c) SCSS
+      STRING scss :=
 `//@import '../../shared/css/vars';
 
 .emb-${this->tag} {
 
-}
-`;
+}\n`;
 
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", TRUE, FALSE, StringToBlob(scss));
+    }
 
-    // 2d) JS
-    STRING js := "import './" || this->tag || ".scss';\n"
-              || "\n"
-              || "import * as dompack from 'dompack';\n"
-              || "\n"
-              || "dompack.onDomReady(() => {\n"
-              || "});\n";
+    IF ("javascript" IN this->addtypes->value)
+    {
+      // 2d) JS
+      STRING js := "import './" || this->tag || ".scss';\n"
+                || "\n"
+                || "import * as dompack from 'dompack';\n"
+                || "\n"
+                || "dompack.onDomReady(() => {\n"
+                || "});\n";
 
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".es", TRUE, FALSE, StringToBlob(js));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".es", TRUE, FALSE, StringToBlob(js));
+    }
 
     // 2e) site profile
-    CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", TRUE, FALSE, StringToBlob(this->siteprlcode));
+    IF ("siteprl" IN this->addtypes->value)
+    {
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", FALSE, FALSE, StringToBlob(this->siteprlcode));
+    }
 
     this->add_js := "import './" || this->tag || "/" || this->tag || "';";
     this->add_siteprl := '<applysiteprofile fullpath="' || this->tag || '/' || this->tag || '.siteprl" />';

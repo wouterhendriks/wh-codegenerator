@@ -16,6 +16,15 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 
   screenbaseurl := baseurl;
 
+  IF (siteprofilesection.is_prebuilt_page)
+  {
+    RETURN
+`  <apply>
+    <to type="all" />
+    <prebuiltpage tag="<module>:${siteprofilesection.lib}" type="${siteprofilesection.prebuilt_page_is_static ? 'static' : 'dynamic'}" library="${siteprofilesection.lib}.whlib" webpageobjectname="${siteprofilesection.lib}page" />
+  </apply>`;
+  }
+
   STRING o;
 
   IF (siteprofilesection.add_custom_rtdtype)
@@ -26,9 +35,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
     <blockstyles defaultstyle="NORMAL">
       <textstyle tag="NORMAL" textstyles="b i a-href sup sub strike" />
     </blockstyles>
-  </rtdtype>
-
-`;
+  </rtdtype>\n\n`;
   }
 
   STRING foldertype := RecordExists(siteprofilesection.foldertype) ? screenbaseurl || 'foldertype/' || GetSiteProfileXMLName(siteprofilesection.lib) : "";
@@ -42,8 +49,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 
        ${CapitalizeFirstChar(siteprofilesection.lib)} folder
 
-  ***********************************************************************  -->
-`;
+  ************************************************************************ -->\n`;
 
     o := o || '  <contenttype namespace="' || foldertype || '" />\n'
            || '\n'
@@ -78,7 +84,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 
        ${CapitalizeFirstChar(siteprofilesection.lib)} folder index file
 
-  ***********************************************************************  -->
+  ************************************************************************ -->
   <contenttype namespace="${filetype}index" />
 
   <filetype typedef="${filetype}index"
@@ -103,8 +109,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 
        ${CapitalizeFirstChar(siteprofilesection.lib)} file${siteprofilesection.use_rtd ? ' (RTD)' : ''}
 
-  *********************************************************************** -->
-`;
+  ************************************************************************ -->\n`;
   }
 
   // add <contenttye> with <member>s and <propertyeditor>s
@@ -151,15 +156,16 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   {
     o := o || GetPropertyEditor(siteprofilesection
                               , screenbaseurl
-                              , FALSE)
+                              , FALSE
+                              , [ isembobj := FALSE ])
            || "\n\n"
            || GetApplies(siteprofilesection, screenbaseurl);
   }
 
   //STRING applyto := siteprofilesection.use_rtd ?
   //IF (siteprofilesection.use_rtd)
-  IF (siteprofilesection.page_only)
-  {
+  //IF (siteprofilesection.page_only)
+  //{
 //    o := o ||
 //`  <apply>
 //    <to type="file" filetype="${filetype}" />
@@ -173,31 +179,48 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
 //`    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
 //  </apply>
 //`;
-  }
-  ELSE
-  {
+  //}
+  //ELSE
+  //{
     o := o ||
 `  <apply>
     ${siteprofilesection.use_rtd
       ? `<to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />`
       : `<to type="file" filetype="${filetype}" />`}
     <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
-  </apply>
 `;
+
+  IF (siteprofilesection.page_only)
+  {
+    IF (siteprofilesection.use_rtd)
+      o := o || `    <setobjecteditor name="publisher:editdocument" />\n`;
+    ELSE
+      o := o || `    <setobjecteditor name="publisher:propertydialog" />\n`;
+
+    o := o || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />\n`;
   }
 
-  o := o ||
-`
-  <!-- ***********************************************************************
+    o := o ||
+`  </apply>\n\n`;
+  //}
+
+  IF (NOT siteprofilesection.page_only)
+  {
+    o := o ||
+`  <!-- ***********************************************************************
 
        Body renderer
 
   *********************************************************************** -->
-  <apply>
+`;
+
+  o := o ||
+`  <apply>
     <to type="file" parenttype="${foldertype}" />
     <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
   </apply>
 `;
+  }
 
   RETURN o;
 }
@@ -268,8 +291,10 @@ PUBLIC STRING FUNCTION GetSiteProfileXMLName(STRING txt)
   RETURN txt;
 }
 
-STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj)
+STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj, RECORD settings)
 {
+  settings := ValidateOptions([ isembobj := FALSE], settings);
+
   STRING xml;
 
   IF (NOT isembobj)
@@ -277,7 +302,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj)
     xml := xml || '  <tabsextension name="' || GetSiteProfileXMLName(data.lib) || '" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n'
                || '    <newtab title="' || data.title || '">\n';
 
-    xml := xml || AddBoxesToPropertyEditor(data.members, "");
+    xml := xml || AddBoxesToPropertyEditor(data.members, "", settings);
   }
 
 
@@ -303,7 +328,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj)
             || '    </compositions>\n'
             || '    <body>\n';
 
-        xml := xml || AddBoxesToPropertyEditor(arraytype.members, "row");
+        xml := xml || AddBoxesToPropertyEditor(arraytype.members, "row", settings);
 
         xml := xml
             || '    </body>\n'
@@ -331,7 +356,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj)
           || '    </compositions>\n'
           || '    <body>\n';
 
-      xml := xml || AddBoxesToPropertyEditor(memberarraytype.members, "row");
+      xml := xml || AddBoxesToPropertyEditor(memberarraytype.members, "row", settings);
 
       xml := xml
           || '    </body>\n'
@@ -345,21 +370,35 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj)
   RETURN xml;
 }
 
-STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING composition_name)
+STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING composition_name, RECORD settings)
 {
+  settings := ValidateOptions([ isembobj := FALSE ], settings);
+
   RECORD ARRAY boxes := [[ title := defaultboxname
                          , name := ""
                          , members := DEFAULT RECORD ARRAY
+                         , owntab := FALSE
                          ]
                         ];
 
   FOREVERY (RECORD siteprofmember FROM siteprofmembers)
   {
     IF (siteprofmember.type iN ["image","array","richdocument","richarea"]) // own box
-      INSERT [ title := siteprofmember.title, name := siteprofmember.name, members := [ siteprofmember ] ] INTO boxes AT END;
+      INSERT CELL[ title := siteprofmember.title
+                 , name := siteprofmember.name
+                 , members := [ siteprofmember ]
+                 , owntab := settings.isembobj AND CellExists(siteprofmember, "owntab") AND siteprofmember.owntab
+                 ] INTO boxes AT END;
     ELSE // default box
-      INSERT siteprofmember INTO boxes[0].members AT END;
+    {
+      INSERT CELL[ ...siteprofmember
+                 , owntab := settings.isembobj AND CellExists(siteprofmember, "owntab") AND siteprofmember.owntab
+                 ] INTO boxes[0].members AT END;
+    }
   }
+
+  // for now, if we have any 1 field with a tab, just add tabs to all (we'll group by and reorder later)
+  BOOLEAN addtabs := settings.isembobj AND RecordExists(SELECT FROM siteprofmembers WHERE CellExists(siteprofmembers, "owntab") AND owntab);
 
   STRING xml;
   FOREVERY (RECORD box FROM boxes)
@@ -370,10 +409,21 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
                            ? (box.title = defaultboxname ? `tid="~settings"` : `tid=".${box.name}"`)
                            : `title="${box.title}"`);
 
-      xml := xml ||  '      <heading ' || tid_title || ' />\n';
+      STRING whitespace := WS(6);
+
+      IF (addtabs)//settings.isembobj AND box.owntab)
+      {
+        xml := xml || WS(8) || `<tab title="${box.title}">\n`;
+        whitespace := WS(10);
+      }
+
+      xml := xml || whitespace || '<heading ' || tid_title || ' />\n';
 
       FOREVERY (RECORD siteprofmember FROM box.members)
-        xml := xml || GetPropertyEditorElement(siteprofmember, composition_name) || "\n";
+        xml := xml || GetPropertyEditorElement(siteprofmember, composition_name, [ whitespace := whitespace ]) || "\n";
+
+      IF (addtabs)//settings.isembobj AND box.owntab)
+        xml := xml || WS(8) || `</tab>\n`;
 
       if (#box+1 < Length(boxes))
         xml := xml || '\n';
@@ -383,8 +433,10 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
   RETURN xml;
 }
 
-STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING composition_name)
+STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING composition_name, RECORD settings)
 {
+  settings := ValidateOptions([ whitespace := "" ], settings);
+
     STRING xml;
 
     composition_name := composition_name ?? "contentdata";
@@ -395,6 +447,14 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     STRING errorlabel := screendata.use_tids
                          ? `errorlabeltid=".${siteprofmember.name}"`
                          : `errorlabel="${siteprofmember.title}"`;
+
+    //STRING whitespace := WS(6);
+
+    //IF (settings.isembobj AND siteprofmember.owntab)
+    //{
+    //  xml := xml || WS(6) || `<tab title="${siteprofmember.title}">\n`;
+    //  whitespace := WS(8);
+    //}
 
     SWITCH (siteprofmember.type)
     {
@@ -409,7 +469,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           /*
           // FIXME: <coloredit> is pretty useless at the moment, falling back to textedit for now
           // https://gitlab.b-lex.com/webhare/webhare/issues/335
-          xml := xml || '      '
+          xml := xml || settings.whitespace
               || '<coloredit composition="' || composition_name || '" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || 'title="' || siteprofmember.title || '" '
@@ -429,7 +489,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         }
         ELSE
         {
-          xml := xml || '      '
+          xml := xml || settings.whitespace
               || '<textedit composition="' || composition_name || '" '
               || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               || (siteprofmember.title != "" ? 'title="' || siteprofmember.title  || '" ' : '');
@@ -445,7 +505,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       }
       CASE "textarea"
       {
-        xml := xml || '      '
+        xml := xml || settings.whitespace
             || '<textarea composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "")
@@ -457,13 +517,13 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       CASE "richdocument"
       {
           xml := xml
-              || '      <richdocument composition="' || composition_name || '"\n'
-              || '                    cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-              || '                    height="1pr"\n'
-              || '                    ' || errorlabel || '\n'
-              || '                    rtdtype="' || (CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype ? `${screenbaseurl}rtd/${screendata.lib}` : "your-rtd-type-url") || '"\n'
-              || (siteprofmember.required ? '                    required="true"\n' : '')
-              || '                    />';
+              || settings.whitespace || '<richdocument composition="' || composition_name || '"\n'
+              || settings.whitespace || '              cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+              || settings.whitespace || '              height="1pr"\n'
+              || settings.whitespace || '              ' || errorlabel || '\n'
+              || settings.whitespace || '              rtdtype="' || (CellExists(screendata, "add_custom_rtdtype") AND screendata.add_custom_rtdtype ? `${screenbaseurl}rtd/${screendata.lib}` : "your-rtd-type-url") || '"\n'
+              || settings.whitespace || (siteprofmember.required ? '              required="true"\n' : '')
+              || settings.whitespace || '              />';
       }
       CASE "richarea"
       {
@@ -481,25 +541,25 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         BOOLEAN hasrowtypes := CellExists(siteprofmember, "settings") AND CellExists(siteprofmember.settings, "types") AND Length(siteprofmember.settings.types) > 0;
 
         xml := xml
-            || '      <arrayedit composition="' || composition_name || '"\n'
-            || '                 cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-            || (hasrowtypes ? '                 rowtypename="membertype"\n' : '')
-            //|| '                 rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-            || (NOT hasrowtypes ? '                 roweditscreen=".edit_' || MakeSingular(GetSiteProfileXMLName(siteprofmember.name)) || '"\n' : '')
-            || '                 orderable="true"\n'
-            || '                 height="1pr"\n'
-            || '                 minheight="200px"\n'
-            || '                 ' || errorlabel || '\n'
-            || (siteprofmember.required ? `                 minrows="1"\n` : "")
-            || '                 >\n';
+            || settings.whitespace || '<arrayedit composition="' || composition_name || '"\n'
+            || settings.whitespace || '           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || (hasrowtypes ? settings.whitespace || '           rowtypename="membertype"\n' : '')
+            //|| settings.whitespace || '           rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || (NOT hasrowtypes ? settings.whitespace || '           roweditscreen=".edit_' || MakeSingular(GetSiteProfileXMLName(siteprofmember.name)) || '"\n' : '')
+            || settings.whitespace || '           orderable="true"\n'
+            || settings.whitespace || '           height="1pr"\n'
+            || settings.whitespace || '           minheight="200px"\n'
+            || settings.whitespace || '           ' || errorlabel || '\n'
+            || (siteprofmember.required ? `${settings.whitespace}           minrows="1"\n` : "")
+            || settings.whitespace || '           >\n';
 
         IF (hasrowtypes)
         {
-          xml := xml || '        <column type="text" name="membertype" title="Type" />\n\n';
+          xml := xml || settings.whitespace || '          <column type="text" name="membertype" title="Type" />\n\n';
 
           FOREVERY (RECORD membertype FROM siteprofmember.settings.types)
           {
-              xml := xml || '      '
+              xml := xml || settings.whitespace
                   || '<rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
                   || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
                   || 'title="' || membertype.title || '" '
@@ -517,7 +577,8 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
               {
                 STRING type := typeuc = "IMAGE" ? "blobrecord" : "text";
 
-                xml := xml || '        <column type="' || type || '" '
+                xml := xml || settings.whitespace
+                           || '  <column type="' || type || '" '
                            || 'name="' || GetSiteProfileXMLName(arraymember.name) || '" '
                            || (typeuc = "IMAGE" ? 'show="info" ' : '')
                            || (arraymember.title != "" ? 'title="' || arraymember.title || '" ' : '')
@@ -527,24 +588,24 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           }
         }
 
-        xml := xml || '      </arrayedit>';
+        xml := xml || settings.whitespace || '</arrayedit>';
       }
       CASE "image"
       {
         xml := xml
-            || '      <panel layout="left">\n'
-            || '        <imgedit composition="' || composition_name || '"\n'
-            || '                 cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-            //|| '                 title="' || (siteprofmember.title != "" ? siteprofmember.title : '') || '"\n'
-            || '                 width="300px"\n'
-            || '                 height="300px"\n'
-            || '                 allowedactions="all refpoint"\n'
-            || '                 title=""\n'
-            || '                 errorlabel="' || siteprofmember.title || '"\n'
-            || '                 publisher="false"\n'
-            || (siteprofmember.required ? '                 required="true"\n' : '')
-            || '                 />\n'
-            || '      </panel>';
+            || settings.whitespace || '<panel layout="left">\n'
+            || settings.whitespace || '  <imgedit composition="' || composition_name || '"\n'
+            || settings.whitespace || '           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            //|| settings.whitespace || '           title="' || (siteprofmember.title != "" ? siteprofmember.title : '') || '"\n'
+            || settings.whitespace || '           width="300px"\n'
+            || settings.whitespace || '           height="300px"\n'
+            || settings.whitespace || '           allowedactions="all refpoint"\n'
+            || settings.whitespace || '           title=""\n'
+            || settings.whitespace || '           errorlabel="' || siteprofmember.title || '"\n'
+            || settings.whitespace || '           publisher="false"\n'
+            || settings.whitespace || (siteprofmember.required ? '           required="true"\n' : '')
+            || settings.whitespace || '   />\n'
+            || settings.whitespace || '</panel>';
       }
       CASE "whfsref"
       {
@@ -574,7 +635,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       }
       CASE "datetime"
       {
-        xml := xml || '      '
+        xml := xml || settings.whitespace
             || '<datetime composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "");
@@ -607,7 +668,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       }
       CASE "intextlink"
       {
-        xml := xml || '      '
+        xml := xml || settings.whitespace
             || '<p:intextlink composition="' || composition_name || '" '
             || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
             || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "")
@@ -716,7 +777,24 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 //  abort(siteprofilesection.members);
 
   STRING o;
-  IF (siteprofilesection.page_only)
+  IF (siteprofilesection.is_prebuilt_page)
+  {
+    STRING webdesign := siteprofilesection.prebuilt_page_is_static ? "webdesign" : "this->webdesign";
+
+    o :=
+`PUBLIC OBJECTTYPE ${CapitalizeFirstChar(siteprofilesection.lib)}Page EXTEND ${siteprofilesection.prebuilt_page_is_static ? 'StaticPageBase' : 'WebPageBase'}
+<
+  UPDATE PUBLIC MACRO PTR FUNCTION GetPageBody(${siteprofilesection.prebuilt_page_is_static ? 'OBJECT webdesign' : ''})
+  {
+    INSERT "page-${siteprofilesection.lib}" INTO ${webdesign}->htmlclasses AT END;
+
+    RECORD wittydata;
+
+    RETURN PTR LoadWittyLibrary(Resolve("${siteprofilesection.lib}.witty"), "HTML-NI")->Run(wittydata);
+  }
+>;`;
+  }
+  ELSE IF (siteprofilesection.page_only)
   {
     o :=
 `PUBLIC OBJECTTYPE ${CapitalizeFirstChar(siteprofilesection.lib)}Page EXTEND StaticPageBase
@@ -922,8 +1000,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
 PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
 {
-  IF (siteprofilesection.page_only)
-    RETURN "";
+  IF (siteprofilesection.page_only OR siteprofilesection.is_prebuilt_page)
+    RETURN `Hello ${siteprofilesection.lib} world`;
 
   screendata := siteprofilesection;
 
@@ -960,6 +1038,11 @@ STRING FUNCTION WS(INTEGER numspaces)
     text := text || ' ';
 
   RETURN text;
+}
+
+STRING FUNCTION AddWS(STRING curtext, INTEGER numspaces, STRING str)
+{
+  RETURN curtext || WS(numspaces) || str;
 }
 
 STRING FUNCTION MakeSingular(STRING txt)
@@ -1050,6 +1133,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
                        ? `gid=".${name}"`
                        : `title="Bewerk ${siteprofilesection.title}"`;
 
+  BOOLEAN anytabs := RecordExists(SELECT FROM siteprofilesection.members WHERE owntab);
+
   o := o ||
 `
 
@@ -1064,13 +1149,18 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
     <compositions>
       <record name="contentdata" />
     </compositions>
-    <body>
+    <body${anytabs ? ' spacers="none"' : ''}>
 `;
+  IF (anytabs)
+    o := AddWS(o, 6, `<tabs height="1pr">\n`);
 
   IF (Length(siteprofilesection.members) = 0)
     o := o || '      <text title="" value="Dit blok heeft geen instelbare eigenschappen." />\n';
   ELSE
-    o := o || AddBoxesToPropertyEditor(siteprofilesection.members, "");
+    o := o || AddBoxesToPropertyEditor(siteprofilesection.members, "", [ isembobj := TRUE ]);
+
+  IF (anytabs)
+    o := AddWS(o, 6, `</tabs>\n`);
 
   o := o ||
 
@@ -1082,7 +1172,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   o := o || GetPropertyEditor(siteprofilesection
                             , baseurl
-                            , TRUE);
+                            , TRUE
+                            , [ isembobj := TRUE ]);
 
   RETURN o || '\n\n</siteprofile>';
 }
@@ -1094,6 +1185,9 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibraryEmbObj(STRING baseurl, RECORD s
   STRING ARRAY loadlibs := [ 'mod::publisher/lib/widgets.whlib' ];
 
   RECORD ARRAY extradata := GenerateExtraMemberCellsForWhlib(siteprofilesection, 'this->data.');
+
+  FOREVERY (RECORD siteprofmember FROM extradata)
+    loadlibs := loadlibs CONCAT siteprofmember.loadlibs;
 
   //FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
   //{
@@ -1292,7 +1386,7 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
 
         addrec := [ ...addrec
                   , name := siteprofmember.name
-                  , value := `PTR webdesign->OpenRTD(${recordname}${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
+                  , value := `PTR ${siteprofile.codetype = "embeddedobject" ? "this->context" : "webdesign"}->OpenRTD(${recordname}${siteprofmember.name}, "${rtdtype}")->RenderAllObjects()`
                   ];
       }
       CASE "intextlink"
@@ -1324,7 +1418,7 @@ PUBLIC STRING FUNCTION GenerateFormFormDefXML(RECORD data)
         >
     <page>
       <textedit name="name" title="Naam" required="true" />
-      <textedit name="email" title="E-mailadres" required="true" />
+      <textedit name="email" title="E-mailadres" required="true" validationchecks="email" />
     </page>
   </form>
 </formdefinitions>
