@@ -584,6 +584,14 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
                            || (arraymember.title != "" ? 'title="' || arraymember.title || '" ' : '')
                            || '/>\n';
               }
+              CASE "INTEXTLINK"
+              {
+                xml := xml || `${settings.whitespace}  <p:intextlinkcolumn name="${GetSiteProfileXMLName(arraymember.name)}" title="${arraymember.title}" />\n`;
+              }
+              CASE "WHFSREF"
+              {
+                xml := xml || `${settings.whitespace}  <p:whfsrefcolumn name="${GetSiteProfileXMLName(arraymember.name)}" display="path" title="${arraymember.title}" />\n`;
+              }
             }
           }
         }
@@ -944,13 +952,10 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
     //o := o || '\n';
 
-    IF (index_is_rtd)
-      o := o || '    OBJECT indexpagecontents := this->webdesign->OpenRTDFromFile(this->webdesign->contentobject);\n\n';
-
     o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || '\n';
 
-    IF (index_is_rtd)
-      o := o || '                           , body := PTR indexpagecontents->RenderAllObjects()\n';
+    //IF (index_is_rtd)
+      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->contentobject)->RenderAllObjects()\n';
 
     o := o || '                           ];\n'
            || '  }\n'
@@ -968,8 +973,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
 
     o := o || '    this->wittydata := CELL[ ' || siteprofilesection.lib || 'data\n';
 
-    IF (filetype_is_rtd)
-      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->contentobject->id)->RenderAllObjects()\n';
+    IF (siteprofilesection.use_rtd)
+      o := o || '                           , body := PTR this->webdesign->OpenRTDFromFile(this->webdesign->contentobject)->RenderAllObjects()\n';
 
     o := o || '                           ];\n'
            || '  }\n';
@@ -1018,13 +1023,13 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWitty(RECORD siteprofilesection)
   RETURN
 `[component ${siteprofilesection.lib}index]
   <div class="p-${siteprofilesection.lib}index">
-
+    [body]
   </div>
 [/component]
 
 [component ${siteprofilesection.lib}details]
   <div class="p-${siteprofilesection.lib}details">
-
+${siteprofilesection.use_rtd ? `    [body]` : ''}
   </div>
 [/component]
 `;
@@ -1143,6 +1148,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
           name="${name}"
           ${gidortitle}
           minwidth="600px"
+          minheight="500px"
           allowresize="true"
           savestate="size"
           >
@@ -1373,10 +1379,31 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
       }
       CASE "array"
       {
-        addrec := [ ...addrec
-                  , name := siteprofmember.name
-                  , value := `(SELECT * FROM ${recordname}${siteprofmember.name})`
-                  ];
+        STRING value := `(SELECT *\n`;
+
+        STRING ARRAY loadlibs;
+        FOREVERY (RECORD arraymember FROM siteprofmember.members)
+        {
+          RECORD arraymemberdata := GenerateExtraMemberCellsForWhlib([ members := [arraymember]], "");
+          IF (NOT RecordExists(arraymember)) // not a special case
+            CONTINUE;
+
+          IF (NOT CellExists(arraymemberdata, "name"))
+            CONTINUE;
+
+          value := value || `${WS(Length(siteprofmember.name) + 23)}, ${arraymemberdata.name} := ${arraymemberdata.value}\n`;
+
+          IF (CellExists(arraymemberdata, "loadlibs"))
+            loadlibs := loadlibs CONCAT arraymemberdata.loadlibs;
+        }
+
+        value := value || `${WS(Length(siteprofmember.name) + 20)}FROM ${recordname}${siteprofmember.name})`;
+
+        addrec := CELL[ ...addrec
+                      , siteprofmember.name
+                      , value
+                      , loadlibs
+                      ];
       }
       CASE "richdocument"
       {
