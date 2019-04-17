@@ -86,7 +86,7 @@
               <tabs height="1pr" name="maintabs" savestate="selectedtab">
                 <tab title="Embedded object">
                   <tabs height="1pr" savestate="selectedtab">
-                    <tab title="Site profile (.siteprl)">
+                    <tab title="Site profile (.siteprl.xml)">
                       <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
                     </tab>
                     <tab title="Library (.whlib)">
@@ -100,7 +100,7 @@
                 <tab title="Object scaffolding" name="objectscaffolding">
                   <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
                   <tabs height="1pr" savestate="selectedtab">
-                    <tab title="Site profile (.siteprl)">
+                    <tab title="Site profile (.siteprl.xml)">
                       <codeedit name="siteprlcode" width="1pr" height="1pr" enabled="false" />
                     </tab>
                     <tab title="Library (.whlib)">
@@ -276,7 +276,7 @@
   <screen name="createtemplate" allowresize="true" minwidth="500px" gid=".createtemplate">
     <body>
       <select type="checkbox" name="addtypes" title="Add">
-        <option rowkey="siteprl" title="Site profile (.siteprl)" selected="true" />
+        <option rowkey="siteprl" title="Site profile (.siteprl.xml)" selected="true" />
         <option rowkey="whlib" title="Library (.whlib)" selected="true" />
         <option rowkey="witty" title="Template (.witty)" selected="true" />
         <option rowkey="javascript" title="JavaScript (.es)" selected="true" />
@@ -309,7 +309,7 @@
   <screen name="createembeddedobjectfolder" allowresize="true" minwidth="500px">
     <body>
       <select type="checkbox" name="addtypes" title="Add">
-        <option rowkey="siteprl" title="Site profile (.siteprl)" selected="true" />
+        <option rowkey="siteprl" title="Site profile (.siteprl.xml)" selected="true" />
         <option rowkey="whlib" title="Library (.whlib)" selected="true" />
         <option rowkey="witty" title="Template (.witty)" selected="true" />
         <option rowkey="javascript" title="JavaScript (.es)" selected="true" />
@@ -331,7 +331,7 @@
     <body>
       <text title="" value="Add to your embeddedobjects.es:" />
       <textarea enabled="false" name="add_js" width="1pr" height="1x" title="" />
-      <text title="" value="Add to your embeddedobjects.siteprl:" />
+      <text title="" value="Add to your embeddedobjects.siteprl.xml:" />
       <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
       <text title="" value="Add to your main &lt;rtdtype&gt;:" />
       <textarea name="add_rtdtype" width="1pr" height="1x" enabled="false" title="" />

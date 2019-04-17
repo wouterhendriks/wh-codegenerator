@@ -277,7 +277,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     {
       scr->LoadScreen(".templatecreatedembobj", [ add_js := scr->add_js
                                                 , add_siteprl := scr->add_siteprl
-                                                , add_rtdtype := `${this->baseurl->value}embeddedobjects/${this->lib->value}`
+                                                , add_rtdtype := `${FixBaseURL(this->baseurl->value)}embeddedobjects/${this->lib->value}`
                                                 ])->RunModal();
     }
   }
@@ -454,11 +454,11 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
                      || '\n'
                      || '</siteprofile>\n';
 
-      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", FALSE, FALSE, StringToBlob(siteprl));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl.xml", FALSE, FALSE, StringToBlob(siteprl));
     }
 
     this->add_js := "import './pages/" || this->tag || "/" || this->tag || "';";
-    this->add_siteprl := '<applysiteprofile fullpath="pages/' || this->tag || '/' || this->tag || '.siteprl" />';
+    this->add_siteprl := '<applysiteprofile fullpath="pages/' || this->tag || '/' || this->tag || '.siteprl.xml" />';
 
     RETURN TRUE;
   }
@@ -591,11 +591,11 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     // 2e) site profile
     IF ("siteprl" IN this->addtypes->value)
     {
-      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl", FALSE, FALSE, StringToBlob(this->siteprlcode));
+      CreateDiskFileFromBlob(newfolderpath || this->tag || ".siteprl.xml", FALSE, FALSE, StringToBlob(this->siteprlcode));
     }
 
     this->add_js := "import './" || this->tag || "/" || this->tag || "';";
-    this->add_siteprl := '<applysiteprofile fullpath="' || this->tag || '/' || this->tag || '.siteprl" />';
+    this->add_siteprl := '<applysiteprofile fullpath="' || this->tag || '/' || this->tag || '.siteprl.xml" />';
 
     RETURN work->Finish();
   }
@@ -758,4 +758,12 @@ MACRO OnModuleChange(OBJECT screenbase)
   screenbase->sitedesign->readonly := Length(screenbase->sitedesign->options) = 1;
 
   screenbase->UpdateExplanation();
+}
+
+STRING FUNCTION FixBaseURL(STRING baseurl)
+{
+  IF (Right(baseurl, 1) != "/")
+    baseurl := baseurl || "/";
+
+  RETURN baseurl;
 }
