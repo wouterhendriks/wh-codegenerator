@@ -83,8 +83,8 @@
               </line>
             </part>
             <part width="2pr">
-              <tabs height="1pr" name="maintabs" savestate="selectedtab">
-                <tab title="Embedded object">
+              <tabs height="1pr" name="maintabs" savestate="selectedtab" type="server">
+                <tab title="Embedded object" name="main_embobj">
                   <tabs height="1pr" savestate="selectedtab">
                     <tab title="Site profile (.siteprl.xml)">
                       <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
@@ -97,7 +97,7 @@
                     </tab>
                   </tabs>
                 </tab>
-                <tab title="Object scaffolding" name="objectscaffolding">
+                <tab title="Object scaffolding" name="main_objectscaffolding">
                   <text title="" value="A full 'folder with custom file type contents' implementation for a 'collection' of items with their own design." />
                   <tabs height="1pr" savestate="selectedtab">
                     <tab title="Site profile (.siteprl.xml)">
@@ -110,9 +110,6 @@
                       <codeedit name="wittycode" width="1pr" height="1pr" enabled="false" />
                     </tab>
                   </tabs>
-                </tab>
-                <tab title="Screen only">
-                  <codeedit name="screen_siteprlcode" width="1pr" height="1pr" enabled="false" />
                 </tab>
               </tabs>
             </part>

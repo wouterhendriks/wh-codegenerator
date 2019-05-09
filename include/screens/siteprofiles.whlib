@@ -38,7 +38,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     this->members->onrowedit := PTR this->DoOpenMembersEditDialog;
 
-    this->maintabs->selectedtab := this->objectscaffolding;
+    //this->maintabs->selectedtab := this->objectscaffolding;
 
     IF ("debug" IN data.params)
     {
@@ -73,6 +73,8 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
       this->DoCreateTemplate();
     }
 
+    this->SetMainTab();
+
     initdone := TRUE;
   }
 
@@ -104,6 +106,13 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     IF (this->initdone)
       this->DoGenerateCode();
+
+    this->SetMainTab();
+  }
+
+  MACRO SetMainTab()
+  {
+    this->maintabs->selectedtab := this->type->value = "embeddedobject" ? this->main_embobj : this->main_objectscaffolding;
   }
 
   MACRO DoGenerateCode()
@@ -155,7 +164,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     //  INSERT CELL index_is_rtd := TRUE INTO data;
 
     this->GenerateCode(data);
-    this->GenerateScreenOnlyCode(data);
   }
 
   STRING FUNCTION CapitalizeFirstChar(STRING text)
@@ -222,17 +230,6 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     this->form_libcode->value := GenerateFormLibrary(formdata);
     this->form_wittycode->value := GenerateFormWitty(formdata);
     this->form_jscode->value := GenerateJavaScriptForm(formdata);
-  }
-
-  MACRO GenerateScreenOnlyCode(RECORD data)
-  {
-    //data.filetypes := DEFAULT RECORD ARRAY;
-    data.foldertype := DEFAULT RECORD;
-    data.screen_only := TRUE;
-
-    data := this->ConvertToExpectedData(data);
-
-    //this->screen_siteprlcode->value := GenerateSiteProfile(this->baseurl->value, data);
   }
 
   MACRO DoSaveSettings() // save settings as HSON

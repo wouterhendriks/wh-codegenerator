@@ -409,7 +409,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
                            ? (box.title = defaultboxname ? `tid="~settings"` : `tid=".${box.name}"`)
                            : `title="${box.title}"`);
 
-      STRING whitespace := WS(6);
+      STRING whitespace := settings.isembobj ? WS(8) : WS(6);
 
       IF (addtabs)//settings.isembobj AND box.owntab)
       {
@@ -573,7 +573,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           STRING typeuc := ToUpperCase(arraymember.type);
           SWITCH (typeuc)
           {
-            CASE "TEXTEDIT","STRING","IMAGE"
+            CASE "TEXTEDIT","STRING","IMAGE","TEXTAREA"
             {
               STRING type := typeuc = "IMAGE" ? "blobrecord" : "text";
 
@@ -1106,13 +1106,14 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   o := o ||
 `
-  <widgettype namespace="${baseurl}embeddedobjects/${GetSiteProfileXMLName(siteprofilesection.name)}"
-              editscreen=".${name}"
-              renderlibrary="${name}.whlib"
-              renderobjectname="${name}"
-              wittycomponent="${name}.witty:embeddedobject"
-              ${TidOrTitle(screendata.use_tids, `siteprofile.embeddedobjects.type-${siteprofilesection.name}`, siteprofilesection.originaltitle)}
-              >
+  <widgettype
+    namespace="${baseurl}embeddedobjects/${GetSiteProfileXMLName(siteprofilesection.name)}"
+    editextension="#${name}"
+    renderlibrary="${name}.whlib"
+    renderobjectname="${name}.whlib#${name}"
+    wittycomponent="${name}.witty:embeddedobject"
+    ${TidOrTitle(screendata.use_tids, `siteprofile.embeddedobjects.type-${siteprofilesection.name}`, siteprofilesection.originaltitle)}
+    >
     <members>
 `;
 
@@ -1141,40 +1142,25 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
   BOOLEAN anytabs := RecordExists(SELECT FROM siteprofilesection.members WHERE owntab);
 
   o := o ||
-`
+`\n
+  <screens xmlns="http://www.webhare.net/xmlns/tollium/screens">
+    <tabsextension name="${name}" implementation="none" allowresize="true">
+      <newtab>\n`;
 
-  <screen xmlns="http://www.webhare.net/xmlns/tollium/screens"
-          implementation="p:widgetedit"
-          name="${name}"
-          ${gidortitle}
-          minwidth="600px"
-          minheight="500px"
-          allowresize="true"
-          savestate="size"
-          >
-    <compositions>
-      <record name="contentdata" />
-    </compositions>
-    <body${anytabs ? ' spacers="none"' : ''}>
-`;
-  IF (anytabs)
-    o := AddWS(o, 6, `<tabs height="1pr">\n`);
+  //IF (anytabs)
+  //  o := AddWS(o, 6, `<tabs height="1pr">\n`);
 
-  IF (Length(siteprofilesection.members) = 0)
-    o := o || '      <text title="" value="Dit blok heeft geen instelbare eigenschappen." />\n';
-  ELSE
+  IF (Length(siteprofilesection.members) > 0)
     o := o || AddBoxesToPropertyEditor(siteprofilesection.members, "", [ isembobj := TRUE ]);
 
-  IF (anytabs)
-    o := AddWS(o, 6, `</tabs>\n`);
+  //IF (anytabs)
+  //  o := AddWS(o, 6, `</tabs>\n`);
 
   o := o ||
 
-`    </body>
-    <footer>
-      <defaultformbuttons buttons="ok cancel" />
-    </footer>
-  </screen>`;
+`      </newtab>
+    </tabsextension>
+  </screens>`;
 
   o := o || GetPropertyEditor(siteprofilesection
                             , baseurl
