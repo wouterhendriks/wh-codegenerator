@@ -1109,7 +1109,6 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
   <widgettype
     namespace="${baseurl}embeddedobjects/${GetSiteProfileXMLName(siteprofilesection.name)}"
     editextension="#${name}"
-    renderlibrary="${name}.whlib"
     renderobjectname="${name}.whlib#${name}"
     wittycomponent="${name}.witty:embeddedobject"
     ${TidOrTitle(screendata.use_tids, `siteprofile.embeddedobjects.type-${siteprofilesection.name}`, siteprofilesection.originaltitle)}
