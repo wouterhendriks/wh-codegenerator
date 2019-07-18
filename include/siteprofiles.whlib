@@ -350,6 +350,8 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj,
           || (screendata.use_tids ? `` : `          title="Bewerk ${memberarraytype.title}"` || "\n")
           || (screendata.use_tids ? '          gid=".' || GetSiteProfileXMLName(memberarraytype.name) || '.edit_' || name_singular || '"\n': "")
           || '          minwidth="500px"\n'
+          || '          allowresize="true"\n'
+          || '          savestate="size"\n'
           || '          >\n'
           || '    <compositions>\n'
           || '      <record name="row" />\n'
@@ -409,7 +411,7 @@ STRING FUNCTION AddBoxesToPropertyEditor(RECORD ARRAY siteprofmembers, STRING co
                            ? (box.title = defaultboxname ? `tid="~settings"` : `tid=".${box.name}"`)
                            : `title="${box.title}"`);
 
-      STRING whitespace := settings.isembobj ? WS(8) : WS(6);
+      STRING whitespace := WS(6);
 
       IF (addtabs)//settings.isembobj AND box.owntab)
       {
@@ -630,16 +632,16 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     }
     CASE "boolean"
     {
-      xml := xml
-          || '      <line layout="left">\n'
-          || '        <checkbox composition="' || composition_name || '" '
+      xml := xml || settings.whitespace
+          || '<line layout="left">\n'
+          || settings.whitespace || '  <checkbox composition="' || composition_name || '" '
           || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
           || 'title="" '
           || (screendata.use_tids
               ? 'labeltid=".' || GetSiteProfileXMLName(siteprofmember.name) || '" '
               : 'label="' || siteprofmember.title || '" ')
           || '/>\n'
-          || '      </line>';
+          || settings.whitespace || '</line>';
     }
     CASE "datetime"
     {
@@ -855,6 +857,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD sitepro
              || '    ELSE\n'
              || '      this->PrepareForDetails();\n'
              || '\n'
+             || '    INSERT "page-' || siteprofilesection.lib || '" INTO this->webdesign->htmlclasses AT END;\n'
              || '    INSERT this->wittycomponent INTO this->webdesign->htmlclasses AT END;\n'
              || '  }\n'
              || '\n'
@@ -1116,7 +1119,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
     <members>
 `;
 
-  // add <contenttye> with <member>s and <propertyeditor>s
+  // add <contenttype> with <member>s and <propertyeditor>s
   RECORD ARRAY members;
   FOREVERY (RECORD mem FROM siteprofilesection.members)
   {
@@ -1142,9 +1145,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   o := o ||
 `\n
-  <screens xmlns="http://www.webhare.net/xmlns/tollium/screens">
-    <tabsextension name="${name}" implementation="none" allowresize="true">
-      <newtab>\n`;
+  <tabsextension name="${name}" implementation="none" allowresize="true" xmlns="http://www.webhare.net/xmlns/tollium/screens">
+    <newtab>\n`;
 
   //IF (anytabs)
   //  o := AddWS(o, 6, `<tabs height="1pr">\n`);
@@ -1157,9 +1159,8 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   o := o ||
 
-`      </newtab>
-    </tabsextension>
-  </screens>`;
+`    </newtab>
+  </tabsextension>`;
 
   o := o || GetPropertyEditor(siteprofilesection
                             , baseurl
@@ -1352,7 +1353,7 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
         //FIXME: Take 'precision' and 'storeutc' into account
         addrec := [ ...addrec
                   , loadlibs := ['wh::datetime.whlib']
-                  , value := `FormatDateTime("%d-%m-%Y", ${siteprofmember.name}`
+                  , value := `FormatDateTime("%d-%m-%Y", ${siteprofmember.name})`
                   ];
       }
       CASE "image"
@@ -1405,7 +1406,7 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
       {
         addrec := [ ...addrec
                   , name := siteprofmember.name
-                  , value := `GetInTextLinkTarget(${siteprofmember.name})`
+                  , value := `GetInTextLinkTarget(${recordname}${siteprofmember.name})`
                   , loadlibs := ['mod::publisher/lib/publisher.whlib']
                   ];
       }

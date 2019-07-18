@@ -455,7 +455,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     }
 
     this->add_js := "import './pages/" || this->tag || "/" || this->tag || "';";
-    this->add_siteprl := '<applysiteprofile fullpath="pages/' || this->tag || '/' || this->tag || '.siteprl.xml" />';
+    this->add_siteprl := '<applysiteprofile path="pages/' || this->tag || '/' || this->tag || '.siteprl.xml" />';
 
     RETURN TRUE;
   }
@@ -592,7 +592,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     }
 
     this->add_js := "import './" || this->tag || "/" || this->tag || "';";
-    this->add_siteprl := '<applysiteprofile fullpath="' || this->tag || '/' || this->tag || '.siteprl.xml" />';
+    this->add_siteprl := '<applysiteprofile path="' || this->tag || '/' || this->tag || '.siteprl.xml" />';
 
     RETURN work->Finish();
   }
