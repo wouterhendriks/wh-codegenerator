@@ -225,7 +225,7 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   RETURN o;
 }
 
-STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent)
+STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent, BOOLEAN isforarray DEFAULTSTO FALSE)
 {
   IF (ToUpperCase(data.type) = "ARRAY")
   {
@@ -247,7 +247,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent)
                   GROUP BY childmembers.name;
 
     FOREVERY (RECORD childmember FROM childmembers)
-      xml := xml || WS(memberindent) || GetSiteProfileMember(childmember, memberindent);
+      xml := xml || WS(memberindent) || GetSiteProfileMember(childmember, memberindent, TRUE);
 
     xml := xml || "  " || WS(memberindent) || "</member>\n";
 
@@ -277,6 +277,12 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent)
   }
 
   xml := xml || ' />';
+
+  IF (ToUpperCase(data.type) = "IMAGE")
+  {
+    STRING indent := isforarray ? WS(memberindent+2) : WS(memberindent);
+    xml := xml || `\n${indent}  <member name="${GetSiteProfileXMLName(data.name)}_alt" type="string" />`;
+  }
 
   IF (data.comments != "")
     xml := xml || ' <!-- ' || data.comments || ' -->';
@@ -614,7 +620,9 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           || settings.whitespace || '           errorlabel="' || siteprofmember.title || '"\n'
           || settings.whitespace || '           publisher="false"\n'
           || settings.whitespace || (siteprofmember.required ? '           required="true"\n' : '')
-          || settings.whitespace || '   />\n'
+          || settings.whitespace || '           />\n'
+          || settings.whitespace || `  <textedit composition="${composition_name}" cellname="${GetSiteProfileXMLName(siteprofmember.name)}_alt" width="1pr" placeholder="Alt-tag" title="" />\n`
+
           || settings.whitespace || '</panel>';
     }
     CASE "whfsref"
@@ -1303,24 +1311,112 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWittyEmbObj(RECORD siteprofilesection)
   <section class="embeddedobject embeddedobject--${GetSiteProfileXMLName(siteprofilesection.name)} embeddedobject--[if isrtdpreview]preview[else]site[/if]">
     [if isrtdpreview]
       <div class="embeddedobject__type">${typetitle}</div>
-    [else]
-      <div class="emb-${GetSiteProfileXMLName(siteprofilesection.name)}">
-        [!
 `;
 
-  FOREVERY (RECORD siteprofmember FROM siteprofilesection.members)
+  FOREVERY (RECORD spmember FROM siteprofilesection.members)
   {
-    o := o || '        [' || siteprofmember.name || ']\n';
+    SWITCH (spmember.type)
+    {
+      CASE "array"
+      {
+        o := o || `      [if ${spmember.name}]\n        <ul>\n          [forevery ${spmember.name}]\n            <li>\n`;
+
+        FOREVERY (RECORD arraymember FROM spmember.members)
+          o := o || PrintSiteprofWittyPreviewElement(arraymember, TRUE);
+
+        o := o || `            </li>\n          [/forevery]\n        </ul>\n      [/if]\n`;
+      }
+      DEFAULT
+      {
+        o := o || PrintSiteprofWittyPreviewElement(spmember, FALSE);
+      }
+    }
   }
 
-  o := o ||
-`        !]
-      </div>
+  o := o || `    [else]
+      <div class="emb-${GetSiteProfileXMLName(siteprofilesection.name)}">
+`;
+
+  FOREVERY (RECORD spmember FROM siteprofilesection.members)
+  {
+    SWITCH (spmember.type)
+    {
+      CASE "array"
+      {
+        o := o || `        [forevery ${spmember.name}]\n          <div class="emb-${siteprofilesection.name}__${spmember.name}-container">\n`;
+
+        FOREVERY (RECORD arraymember FROM spmember.members)
+          o := o || PrintSiteprofWittyElement(arraymember, TRUE, siteprofilesection);
+
+        o := o || `          </div>\n        [/forevery]\n`;
+      }
+      DEFAULT
+      {
+        o := o || PrintSiteprofWittyElement(spmember, FALSE, siteprofilesection);
+      }
+    }
+  }
+
+  o := o || `      </div>
     [/if]
   </section>
 [/component]`;
 
   RETURN o;
+}
+
+STRING FUNCTION PrintSiteprofWittyElement(RECORD memberinfo, BOOLEAN isarrayelement, RECORD siteprofilesection)
+{
+  STRING s;
+
+  IF (isarrayelement)
+    s := '            ';
+  ELSE
+    s := '        ';
+
+  SWITCH (memberinfo.type)
+  {
+    CASE "string"
+    {
+      s := s || `<div class="emb-${GetSiteProfileXMLName(siteprofilesection.name)}__${memberinfo.name}">[${memberinfo.name}]</div>`;
+    }
+    DEFAULT
+    {
+      RETURN "";
+    }
+  }
+
+  RETURN s || '\n';
+}
+
+STRING FUNCTION PrintSiteprofWittyPreviewElement(RECORD memberinfo, BOOLEAN isarrayelement)
+{
+  STRING s;
+
+  IF (isarrayelement)
+    s := '              ';
+  ELSE
+    s := '      ';
+
+  STRING htmlel := isarrayelement ? 'div' : 'p';
+
+  SWITCH (memberinfo.type)
+  {
+    CASE "string"
+    {
+      s := s || `<${htmlel}>[${memberinfo.name}]</${htmlel}>`;
+    }
+    //CASE "image"
+    //{
+    //  s := s || `[if ${memberinfo.name}]<p><img src="[${memberinfo.name}.link]" height="150" /></p>[/if]`;
+    //}
+    DEFAULT
+    {
+      RETURN "";
+    }
+  }
+
+  RETURN s || '\n';
 }
 
 STRING FUNCTION CapitalizeFirstChar(STRING text)
