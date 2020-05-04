@@ -23,13 +23,13 @@
 
     <toolbar name="toolbar">
       <button title="Create template" action="createtemplate" icon="tollium:actions/add" />
-      <button title="Create embedded object" action="createembeddedobjectfolder" icon="tollium:actions/add" />
+      <button title="Create widget" action="createembeddedobjectfolder" icon="tollium:actions/add" />
       <button title="Create form" action="createformfolder" icon="tollium:actions/add" />
     </toolbar>
 
     <body spacers="none">
       <tabs height="1pr" savestate="selectedtab">
-        <tab title="Site profile / embedded objects">
+        <tab title="Site profile / widgets">
           <split type="horizontal">
             <part width="1pr" marginright="5px">
               <box title="Settings">
@@ -39,7 +39,7 @@
                 <select name="type" type="radio" title="Code type" onchange="onanychange">
                   <option rowkey="folderwithindex" title="Overview folder with index file and details page" />
                   <option rowkey="page_only" title="Custom page only" />
-                  <option rowkey="embeddedobject" title="Embedded object" />
+                  <option rowkey="embeddedobject" title="Widget" />
                 </select>
                 <!--
                 <line layout="left">
@@ -84,7 +84,7 @@
             </part>
             <part width="2pr">
               <tabs height="1pr" name="maintabs" savestate="selectedtab" type="server">
-                <tab title="Embedded object" name="main_embobj">
+                <tab title="Widget" name="main_embobj">
                   <tabs height="1pr" savestate="selectedtab">
                     <tab title="Site profile (.siteprl.xml)">
                       <codeedit name="emb_siteprlcode" width="1pr" height="1pr" enabled="false" type="xml" />
@@ -160,7 +160,7 @@
                 flags="showarray showdatetime"
                 >
           <option rowkey="array" title="Array" flags="showarray" />
-          <option rowkey="boolean" title="Boolean" />
+          <option rowkey="boolean" title="Boolean (checkbox)" />
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
           <option rowkey="intextlink" title="Intextlink" />
@@ -324,11 +324,11 @@
     </footer>
   </screen>
 
-  <screen name="templatecreatedembobj" allowresize="true" minwidth="800px" title="Embedded object created">
+  <screen name="templatecreatedembobj" allowresize="true" minwidth="800px" title="Widget created">
     <body>
-      <text title="" value="Add to your embeddedobjects.es:" />
+      <text title="" value="Add to your widgets.es:" />
       <textarea enabled="false" name="add_js" width="1pr" height="1x" title="" />
-      <text title="" value="Add to your embeddedobjects.siteprl.xml:" />
+      <text title="" value="Add to your widgets.siteprl.xml:" />
       <textarea name="add_siteprl" width="1pr" height="1x" enabled="false" title="" />
       <text title="" value="Add to your main &lt;rtdtype&gt;:" />
       <textarea name="add_rtdtype" width="1pr" height="1x" enabled="false" title="" />

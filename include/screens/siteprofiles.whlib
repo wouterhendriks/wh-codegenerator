@@ -274,7 +274,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
     {
       scr->LoadScreen(".templatecreatedembobj", [ add_js := scr->add_js
                                                 , add_siteprl := scr->add_siteprl
-                                                , add_rtdtype := `${FixBaseURL(this->baseurl->value)}embeddedobjects/${this->lib->value}`
+                                                , add_rtdtype := `${FixBaseURL(this->baseurl->value)}widgets/${this->lib->value}`
                                                 ])->RunModal();
     }
   }
@@ -521,24 +521,24 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
 
     RECORD settings := this->GetTemplateSettings();
 
-    // check for folder 'embedded objects'
-    RECORD ARRAY embeddedobjectscontents := ReadDiskDirectory(settings.sitedesign_path || "embeddedobjects/", "*");
-    IF (Length(embeddedobjectscontents) = 0) // FIXME: better way to check if a folder exists?
+    // check for folder 'widgets'
+    RECORD ARRAY widgetscontents := ReadDiskDirectory(settings.sitedesign_path || "widgets/", "*");
+    IF (Length(widgetscontents) = 0) // FIXME: better way to check if a folder exists?
     {
       TRY
       {
-        CreateDiskDirectory(settings.sitedesign_path || "embeddedobjects", TRUE);
+        CreateDiskDirectory(settings.sitedesign_path || "widgets", TRUE);
       }
       CATCH (OBJECT e)
       {
         work->AddError(e->what);
         RETURN work->Finish();
       }
-      //work->AddError(`Directory '${settings.sitedesign_path}embeddedobjects/' doesn't seem to exist (please add a file if it's empty)`);
+      //work->AddError(`Directory '${settings.sitedesign_path}widgets/' doesn't seem to exist (please add a file if it's empty)`);
     }
 
-    // 1) create a folder 'TAG' in src/embeddedobjects/
-    STRING newfolderpath := settings.sitedesign_path || "embeddedobjects/" || this->tag || "/";
+    // 1) create a folder 'TAG' in src/widgets/
+    STRING newfolderpath := settings.sitedesign_path || "widgets/" || this->tag || "/";
     RECORD ARRAY newfoldercontents := ReadDiskDirectory(newfolderpath, "*");
     //IF (Length(newfoldercontents) > 0) // FIXME: better way to check if a folder exists?
     //{
@@ -565,7 +565,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
       STRING scss :=
 `//@import '../../shared/css/vars';
 
-.emb-${this->tag} {
+.w-${this->tag} {
 
 }\n`;
 
