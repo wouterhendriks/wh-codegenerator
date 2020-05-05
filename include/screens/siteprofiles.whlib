@@ -419,7 +419,7 @@ PUBLIC OBJECTTYPE CreateTemplate EXTEND TolliumScreenBase
     // 2c) SCSS
     IF ("css" IN this->addtypes->value)
     {
-      STRING scss := "// @import '../../shared/css/vars';\n";
+      STRING scss := "// @import '../../shared/css/functions';\n";
       CreateDiskFileFromBlob(newfolderpath || this->tag || ".scss", FALSE, FALSE, StringToBlob(scss));
     }
 
@@ -563,7 +563,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     {
       // 2c) SCSS
       STRING scss :=
-`//@import '../../shared/css/vars';
+`//@import '../../shared/css/functions';
 
 .w-${this->tag} {
 

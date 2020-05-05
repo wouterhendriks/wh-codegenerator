@@ -450,6 +450,8 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
   //  whitespace := WS(8);
   //}
 
+  STRING siteprofname := GetSiteProfileXMLName(siteprofmember.name);
+
   SWITCH (siteprofmember.type)
   {
     CASE "string"
@@ -465,7 +467,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         // https://gitlab.b-lex.com/webhare/webhare/issues/335
         xml := xml || settings.whitespace
             || '<coloredit composition="' || composition_name || '" '
-            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'cellname="' || siteprofname || '" '
             || 'title="' || siteprofmember.title || '" '
             || (siteprofmember.required ? 'required="true" ' : '')
             || '/>';
@@ -473,7 +475,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         xml := xml
             || '      <line>\n'
             || '        <textedit composition="' || composition_name || '" '
-            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'cellname="' || siteprofname || '" '
             || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : '')
             || (siteprofmember.required ? 'required="true" ' : '')
             || 'width="10x" '
@@ -485,7 +487,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       {
         xml := xml || settings.whitespace
             || '<textedit composition="' || composition_name || '" '
-            || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+            || 'cellname="' || siteprofname || '" '
             || (siteprofmember.title != "" ? 'title="' || siteprofmember.title  || '" ' : '');
 
         IF (specialtype = "integer")
@@ -501,7 +503,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     {
       xml := xml || settings.whitespace
           || '<textarea composition="' || composition_name || '" '
-          || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+          || 'cellname="' || siteprofname || '" '
           || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "")
           || 'width="1pr" '
           || 'height="3x" '
@@ -512,18 +514,18 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     {
         xml := xml
             || settings.whitespace || '<richdocument composition="' || composition_name || '"\n'
-            || settings.whitespace || '              cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || settings.whitespace || '              cellname="' || siteprofname || '"\n'
             || settings.whitespace || '              height="1pr"\n'
             || settings.whitespace || (siteprofmember.required ? '              required="true"\n' : '')
             || settings.whitespace || '              ' || errorlabel || '\n'
-            || settings.whitespace || '              rtdtype="' || `${screenbaseurl}widgets/${screendata.lib}/rtd/${GetSiteProfileXMLName(siteprofmember.name)}`
+            || settings.whitespace || '              rtdtype="' || `${screenbaseurl}widgets/${screendata.lib}/rtd/${siteprofname}`
             || ' />';
     }
     CASE "richarea"
     {
         xml := xml
             || '      <richarea composition="' || composition_name || '"\n'
-            || '                cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+            || '                cellname="' || siteprofname || '"\n'
             || '                height="1pr"\n'
             || '                tagfilter="a-href img b i p ul ol"\n'
             || '                ' || errorlabel || '\n'
@@ -536,13 +538,14 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
 
       xml := xml
           || settings.whitespace || '<arrayedit composition="' || composition_name || '"\n'
-          || settings.whitespace || '           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+          || settings.whitespace || '           cellname="' || siteprofname || '"\n'
           || (hasrowtypes ? settings.whitespace || '           rowtypename="membertype"\n' : '')
-          //|| settings.whitespace || '           rowaddscreen=".add' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
-          || (NOT hasrowtypes ? settings.whitespace || '           roweditscreen=".edit_' || MakeSingular(GetSiteProfileXMLName(siteprofmember.name)) || '"\n' : '')
+          //|| settings.whitespace || '           rowaddscreen=".add' || siteprofname || '"\n'
+          || (NOT hasrowtypes ? settings.whitespace || '           roweditscreen=".edit_' || MakeSingular(siteprofname) || '"\n' : '')
           || settings.whitespace || '           orderable="true"\n'
           || settings.whitespace || '           height="1pr"\n'
           || settings.whitespace || '           minheight="200px"\n'
+          || settings.whitespace || '           minwidth="600px"\n'
           || (siteprofmember.required ? `${settings.whitespace}           minrows="1"\n` : "")
           || settings.whitespace || '           ' || errorlabel
           || '>\n';
@@ -555,7 +558,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
         {
             xml := xml || settings.whitespace
                 || '<rowdatatype type="' || GetSiteProfileXMLName(membertype.name) || '" '
-                || 'screen=".edit_' || GetSiteProfileXMLName(siteprofmember.name) || '_' || GetSiteProfileXMLName(membertype.name) || '" '
+                || 'screen=".edit_' || siteprofname || '_' || GetSiteProfileXMLName(membertype.name) || '" '
                 || 'title="' || membertype.title || '" '
                 || '/>\n';
         }
@@ -580,7 +583,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             }
             CASE "INTEXTLINK"
             {
-              xml := xml || `${settings.whitespace}  <p:intextlinkcolumn name="${GetSiteProfileXMLName(arraymember.name)}" title="${arraymember.title}" />\n`;
+              xml := xml || `${settings.whitespace}  <p:intextlinkcolumn name="${GetSiteProfileXMLName(arraymember.name)}"${screendata.use_tids ? '' : ` title="${arraymember.title}"`} />\n`;
             }
             CASE "WHFSREF"
             {
@@ -597,18 +600,18 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       xml := xml
           || settings.whitespace || '<panel layout="left">\n'
           || settings.whitespace || '  <imgedit composition="' || composition_name || '"\n'
-          || settings.whitespace || '           cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+          || settings.whitespace || '           cellname="' || siteprofname || '"\n'
           //|| settings.whitespace || '           title="' || (siteprofmember.title != "" ? siteprofmember.title : '') || '"\n'
           || settings.whitespace || '           width="300px"\n'
           || settings.whitespace || '           height="300px"\n'
           || settings.whitespace || '           allowedactions="all refpoint"\n'
           || settings.whitespace || '           title=""\n'
-          || settings.whitespace || '           errorlabel="' || siteprofmember.title || '"\n'
+          || settings.whitespace || `           ${screendata.use_tids ? `errorlabeltid=".${siteprofname}"` : `errorlabel="${siteprofmember.title}"`}\n`
           || (siteprofmember.required ? settings.whitespace || '           required="true"\n' : '')
           //|| settings.whitespace || (siteprofmember.required ? '           required="true"\n' : '')
           || settings.whitespace || '           publisher="false"'
           || ' />\n'
-          || settings.whitespace || `  <textedit composition="${composition_name}" cellname="${GetSiteProfileXMLName(siteprofmember.name)}_alt" width="1pr" placeholder="Alt-tag" title="" />\n`
+          || settings.whitespace || `  <textedit composition="${composition_name}" cellname="${siteprofname}_alt" width="1pr" placeholder="Alt-tag" title="" />\n`
 
           || settings.whitespace || '</panel>';
     }
@@ -616,7 +619,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     {
       xml := xml
           || '      <p:browseforobject composition="' || composition_name || '"\n'
-          || '                         cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
+          || '                         cellname="' || siteprofname || '"\n'
           || (siteprofmember.title != "" ? '                         title="' || siteprofmember.title || '"\n' : "")
           || (siteprofmember.required ? '                         required="true"\n' : '')
           || '                         width="1pr"\n'
@@ -630,10 +633,10 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
       xml := xml || settings.whitespace
           || '<line layout="left">\n'
           || settings.whitespace || '  <checkbox composition="' || composition_name || '" '
-          || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+          || 'cellname="' || siteprofname || '" '
           || 'title="" '
           || (screendata.use_tids
-              ? 'labeltid=".' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+              ? 'labeltid=".' || siteprofname || '" '
               : 'label="' || siteprofmember.title || '" ')
           || '/>\n'
           || settings.whitespace || '</line>';
@@ -642,7 +645,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     {
       xml := xml || settings.whitespace
           || '<datetime composition="' || composition_name || '" '
-          || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+          || 'cellname="' || siteprofname || '" '
           || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "");
 
       STRING dttype := "date";
@@ -675,7 +678,7 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
     {
       xml := xml || settings.whitespace
           || '<p:intextlink composition="' || composition_name || '" '
-          || 'cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '" '
+          || 'cellname="' || siteprofname || '" '
           || (siteprofmember.title != "" ? 'title="' || siteprofmember.title || '" ' : "")
           || (siteprofmember.required ? 'required="true" ' : '')
           || 'width="1pr" '
@@ -1097,7 +1100,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
               editextension="#${name}"
               renderobjectname="${name}.whlib#${name}"
               wittycomponent="${name}.witty:widget"
-              ${TidOrTitle(screendata.use_tids, `siteprofile.widgets.${siteprofilesection.name}.widgettype`, siteprofilesection.originaltitle)}>
+              ${TidOrTitle(screendata.use_tids, `.widgettype`, siteprofilesection.originaltitle)}>
     <members>
 `;
 
@@ -1337,12 +1340,12 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWittyEmbObj(RECORD siteprofilesection)
     {
       CASE "array"
       {
-        o := o || `        [forevery ${spmember.name}]\n          <div class="w-${siteprofilesection.name}__${spmember.name}-container">\n`;
+        o := o || `        <div class="w-${siteprofilesection.name}__${spmember.name}container">\n          [forevery ${spmember.name}]\n`;
 
         FOREVERY (RECORD arraymember FROM spmember.members)
           o := o || PrintSiteprofWittyElement(arraymember, TRUE, siteprofilesection);
 
-        o := o || `          </div>\n        [/forevery]\n`;
+        o := o || `          [/forevery]\n        </div>\n`;
       }
       DEFAULT
       {
