@@ -53,9 +53,6 @@
                   <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
                 </line>
                 <line layout="left">
-                  <checkbox name="add_custom_rtdtype" title="" label="Add custom RTD type (added as separate node and to &lt;richdocument rtdtype&gt; attributes)" onchange="onanychange" value="true" />
-                </line>
-                <line layout="left">
                   <checkbox name="is_prebuilt_page" title="" label="Add page as prebuilt page (doesn't add members currently)" onchange="onanychange" />
                 </line>
                 <line layout="left">

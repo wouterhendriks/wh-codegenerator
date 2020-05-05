@@ -4,8 +4,8 @@
   <meta>
     <version>1.0</version>
     <description>WebHare Code Generator</description>
-    <author>Nerds &amp; Company</author>
-    <packaging download="true">
+    <author>Webwerf</author>
+    <packaging download="true" webhareversion=">= 4.28.0">
     </packaging>
   </meta>
 
@@ -18,7 +18,7 @@
   </portal>
 
   <rights>
-    <right name="superuser" title="Ter Brugge - Barcode Scanner">
+    <right name="superuser">
       <impliedby right="system:sysop" />
     </right>
   </rights>

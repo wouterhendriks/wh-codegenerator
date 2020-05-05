@@ -79,23 +79,12 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   ************************************************************************ -->
   <contenttype namespace="${filetype}index" />
 
-  <filetype typedef="${filetype}index"
+  <filetype namespace="${filetype}index"
             title="${siteprofilesection.foldertype.title}"
             tolliumicon="tollium:files/application_x-webhare-richdocument"
-            blobiscontent="false"
-            needstemplate="true"
-            needsprofile="false"
-            ispublishable="true"
-            requirescontent="false"
-            isacceptableindex="true"
-            ispublishedassubdir="true"
-            extensions=".rtd"
-            />
-
-  <apply>
-    <to type="file" filetype="${filetype}index" />
+            kind="virtualfile">
     <setobjecteditor name="publisher:editdocument" />
-  </apply>
+  </filetype>
 
   <!-- ***********************************************************************
 
@@ -105,43 +94,74 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
   }
 
   // add <contenttye> with <member>s and <propertyeditor>s
-  IF (Length(siteprofilesection.members) = 0) // no members, just a <contenttype> then
-  {
-    o := o || '  <contenttype namespace="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '">\n  </contenttype>\n\n';
-  }
-  ELSE
-  {
-    o := o || '  <contenttype namespace="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '">\n';
+  //IF (Length(siteprofilesection.members) = 0) // no members, just a <contenttype> then
+  //{
+  //  o := o || '  <contenttype namespace="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '">\n  </contenttype>\n\n';
+  //}
+  //ELSE
+  //{
+  //  o := o || '  <contenttype namespace="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '">\n';
 
-    RECORD ARRAY members;
-    FOREVERY (RECORD mem FROM siteprofilesection.members)
-    {
-      IF (NOT RecordExists(SELECT FROM members WHERE ToUpperCase(members.name) = ToUpperCase(mem.name)))
-      {
-        INSERT mem INTO members AT END;
-      }
-    }
+  //  RECORD ARRAY members;
+  //  FOREVERY (RECORD mem FROM siteprofilesection.members)
+  //  {
+  //    IF (NOT RecordExists(SELECT FROM members WHERE ToUpperCase(members.name) = ToUpperCase(mem.name)))
+  //    {
+  //      INSERT mem INTO members AT END;
+  //    }
+  //  }
 
-    FOREVERY (RECORD smember FROM members)
-    {
-      o := o || GetSiteProfileMember(smember, 2);
-    }
+  //  FOREVERY (RECORD smember FROM members)
+  //  {
+  //    o := o || GetSiteProfileMember(smember, 2);
+  //  }
 
-    o := o || '  </contenttype>\n\n';
-  }
+  //  o := o || '  </contenttype>\n\n';
+  //}
 
   IF (NOT siteprofilesection.use_rtd)
   {
     o := o ||
-         '  <filetype typedef="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '"\n'
+         '  <filetype namespace="' || screenbaseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '"\n'
       || '            title="' || EncodeValue(siteprofilesection.title) || '"\n'
-      || '            blobiscontent="false"\n'
-      || '            ispublishable="true"\n'
-      || '            tolliumicon="tollium:files/text_plain"\n'
-      || '            isacceptableindex="false"\n'
-      || '            ispublishedassubdir="true"\n'
-      || '            needstemplate="true"\n'
-      || '            />\n\n';
+      || '            kind="virtualfile"\n'
+      || '            tolliumicon="tollium:files/text_plain"';
+
+    IF (Length(siteprofilesection.members) > 0)
+    {
+      o := o || `>\n    <members>\n`;
+
+      RECORD ARRAY members;
+      FOREVERY (RECORD mem FROM siteprofilesection.members)
+      {
+        IF (NOT RecordExists(SELECT FROM members WHERE ToUpperCase(members.name) = ToUpperCase(mem.name)))
+        {
+          INSERT mem INTO members AT END;
+        }
+      }
+
+      FOREVERY (RECORD smember FROM members)
+      {
+        o := o || GetSiteProfileMember(smember, 4);
+      }
+
+      o := o || `    </members>\n`;
+    }
+
+    IF (NOT siteprofilesection.use_rtd)
+    {
+      o := o || `    <setobjecteditor name="publisher:propertydialog" />\n`;
+      o := o || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />\n`;
+    }
+
+    IF (Length(siteprofilesection.members) > 0)
+    {
+      o := o || `  </filetype>\n\n`;
+    }
+    ELSE
+    {
+      o := o || ` />\n\n`;
+    }
   }
 
   IF (Length(siteprofilesection.members) > 0)
@@ -150,46 +170,23 @@ PUBLIC STRING FUNCTION GenerateSiteprofile(STRING baseurl, RECORD siteprofilesec
                               , screenbaseurl
                               , FALSE
                               , [ isembobj := FALSE ])
-           || "\n\n"
-           || GetApplies(siteprofilesection, screenbaseurl);
+           || "\n\n";
+           //|| GetApplies(siteprofilesection, screenbaseurl);
   }
 
-  //STRING applyto := siteprofilesection.use_rtd ?
-  //IF (siteprofilesection.use_rtd)
-  //IF (siteprofilesection.page_only)
-  //{
-//    o := o ||
-//`  <apply>
-//    <to type="file" filetype="${filetype}" />
-//    <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
-//`;
-
-//    IF (siteprofilesection.use_rtd)
-//      o := o || '    <setobjecteditor name="publisher:editdocument" />\n';
-
-//    o := o ||
-//`    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />
-//  </apply>
-//`;
-  //}
-  //ELSE
-  //{
+  IF (siteprofilesection.use_rtd)
+  {
     o := o ||
 `  <apply>
-    ${siteprofilesection.use_rtd
-      ? `<to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />`
-      : `<to type="file" filetype="${filetype}" />`}
+    <to type="file" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" parenttype="${foldertype}" />
     <extendproperties extension=".${GetSiteProfileXMLName(siteprofilesection.lib)}" contenttype="${filetype}" />
 `;
 
-  IF (siteprofilesection.page_only)
-  {
-    IF (siteprofilesection.use_rtd)
+    IF (siteprofilesection.page_only)
+    {
       o := o || `    <setobjecteditor name="publisher:editdocument" />\n`;
-    ELSE
-      o := o || `    <setobjecteditor name="publisher:propertydialog" />\n`;
-
-    o := o || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />\n`;
+      o := o || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />\n`;
+    }
   }
 
     o := o ||
@@ -221,7 +218,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent, BOOLEAN 
 {
   IF (ToUpperCase(data.type) = "ARRAY")
   {
-    STRING xml := '    <array name="' || GetSiteProfileXMLName(data.name) || '">\n';
+    STRING xml := WS(memberindent+2) || '<array name="' || GetSiteProfileXMLName(data.name) || '">\n';
 
     BOOLEAN hasrowtypes := CellExists(data, "settings") AND CellExists(data.settings, "types") AND Length(data.settings.types) > 0;
 
@@ -246,7 +243,7 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent, BOOLEAN 
     RETURN xml;
   }
 
-  STRING xml := '    <';
+  STRING xml := `${isforarray ? WS(memberindent) : WS(memberindent+2)}<`;
 
   SWITCH (ToUpperCase(data.type))
   {
@@ -272,8 +269,8 @@ STRING FUNCTION GetSiteProfileMember(RECORD data, INTEGER memberindent, BOOLEAN 
 
   IF (ToUpperCase(data.type) = "IMAGE")
   {
-    STRING indent := isforarray ? WS(memberindent+2) : WS(memberindent);
-    xml := xml || `\n${indent}  <string name="${GetSiteProfileXMLName(data.name)}_alt" />`;
+    STRING indent := isforarray ? WS(memberindent+4) : screendata.codetype IN ["page_only","folderwithindex"] ? WS(memberindent+2) : WS(memberindent+2);
+    xml := xml || `\n${indent}<string name="${GetSiteProfileXMLName(data.name)}_alt" />`;
   }
 
   IF (data.comments != "")
@@ -298,7 +295,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj,
   IF (NOT isembobj)
   {
     xml := xml || '  <tabsextension name="' || GetSiteProfileXMLName(data.lib) || '" xmlns="http://www.webhare.net/xmlns/tollium/screens">\n'
-               || '    <newtab title="' || data.title || '">\n';
+               || `    <newtab ${screendata.use_tids ? 'tid="~settings"' : 'title="${data.title}'}">\n`;
 
     xml := xml || AddBoxesToPropertyEditor(data.members, "", settings);
   }
@@ -350,7 +347,7 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj,
           || '          minwidth="500px"\n'
           || '          allowresize="true"\n'
           || '          savestate="size"\n'
-          || '          >\n'
+          || '          footerbuttons="ok cancel">\n'
           || '    <compositions>\n'
           || '      <record name="row" />\n'
           || '    </compositions>\n'
@@ -360,9 +357,6 @@ STRING FUNCTION GetPropertyEditor(RECORD data, STRING baseurl, BOOLEAN isembobj,
 
       xml := xml
           || '    </body>\n'
-          || '    <footer>\n'
-          || '      <defaultformbuttons buttons="ok cancel" />\n'
-          || '    </footer>\n'
           || '  </screen>';
     }
   }
@@ -520,10 +514,10 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
             || settings.whitespace || '<richdocument composition="' || composition_name || '"\n'
             || settings.whitespace || '              cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
             || settings.whitespace || '              height="1pr"\n'
-            || settings.whitespace || '              ' || errorlabel || '\n'
-            || settings.whitespace || '              rtdtype="' || `${screenbaseurl}widgets/${screendata.lib}/rtd/${GetSiteProfileXMLName(siteprofmember.name)}` || '"\n'
             || settings.whitespace || (siteprofmember.required ? '              required="true"\n' : '')
-            || settings.whitespace || '              />';
+            || settings.whitespace || '              ' || errorlabel || '\n'
+            || settings.whitespace || '              rtdtype="' || `${screenbaseurl}widgets/${screendata.lib}/rtd/${GetSiteProfileXMLName(siteprofmember.name)}`
+            || ' />';
     }
     CASE "richarea"
     {
@@ -549,9 +543,9 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           || settings.whitespace || '           orderable="true"\n'
           || settings.whitespace || '           height="1pr"\n'
           || settings.whitespace || '           minheight="200px"\n'
-          || settings.whitespace || '           ' || errorlabel || '\n'
           || (siteprofmember.required ? `${settings.whitespace}           minrows="1"\n` : "")
-          || settings.whitespace || '           >\n';
+          || settings.whitespace || '           ' || errorlabel
+          || '>\n';
 
       IF (hasrowtypes)
       {
@@ -610,9 +604,10 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           || settings.whitespace || '           allowedactions="all refpoint"\n'
           || settings.whitespace || '           title=""\n'
           || settings.whitespace || '           errorlabel="' || siteprofmember.title || '"\n'
-          || settings.whitespace || '           publisher="false"\n'
-          || settings.whitespace || (siteprofmember.required ? '           required="true"\n' : '')
-          || settings.whitespace || '           />\n'
+          || (siteprofmember.required ? settings.whitespace || '           required="true"\n' : '')
+          //|| settings.whitespace || (siteprofmember.required ? '           required="true"\n' : '')
+          || settings.whitespace || '           publisher="false"'
+          || ' />\n'
           || settings.whitespace || `  <textedit composition="${composition_name}" cellname="${GetSiteProfileXMLName(siteprofmember.name)}_alt" width="1pr" placeholder="Alt-tag" title="" />\n`
 
           || settings.whitespace || '</panel>';
@@ -623,12 +618,12 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
           || '      <p:browseforobject composition="' || composition_name || '"\n'
           || '                         cellname="' || GetSiteProfileXMLName(siteprofmember.name) || '"\n'
           || (siteprofmember.title != "" ? '                         title="' || siteprofmember.title || '"\n' : "")
+          || (siteprofmember.required ? '                         required="true"\n' : '')
           || '                         width="1pr"\n'
           || '                         acceptfolders="false"\n'
           || '                         acceptfiles="true"\n'
-          || '                         fullpath="/"\n'
-          || (siteprofmember.required ? '                         required="true"\n' : '')
-          || '                         />';
+          || '                         fullpath="/"'
+          || ' />';
     }
     CASE "boolean"
     {
@@ -697,64 +692,64 @@ STRING FUNCTION GetPropertyEditorElement(RECORD siteprofmember, STRING compositi
   RETURN xml;
 }
 
-STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
-{
-  IF (CellExists(siteprofilesection, "screen_only") AND siteprofilesection.screen_only = TRUE)
-    RETURN "";
+//STRING FUNCTION GetApplies(RECORD siteprofilesection, STRING baseurl)
+//{
+//  IF (CellExists(siteprofilesection, "screen_only") AND siteprofilesection.screen_only = TRUE)
+//    RETURN "";
 
-  STRING xml;
+//  STRING xml;
 
-  BOOLEAN filetype_is_rtd;// := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
+//  BOOLEAN filetype_is_rtd;// := CellExists(siteprofilesection, "filetype_is_rtd") AND siteprofilesection.filetype_is_rtd = TRUE;
 
-  STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib);
-  //IF (filetype_is_rtd)
-    //xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
+//  STRING xmlns_file := baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib);
+//  //IF (filetype_is_rtd)
+//    //xmlns_file := "http://www.webhare.net/xmlns/publisher/richdocumentfile";
 
-  STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(siteprofilesection.foldertype.title) || 's';
+//  STRING xmlns_folder := baseurl || 'foldertype/' || GetSiteProfileXMLName(siteprofilesection.foldertype.title) || 's';
 
-  //IF (siteprofilesection.use_rtd)
-  //{
+//  //IF (siteprofilesection.use_rtd)
+//  //{
 
-  //}
-  //ELSE
-  //{
-    //IF (NOT siteprofilesection.page_only)
-    //{
-    //  xml := xml
-    //      || '  <apply>\n'
-    //      || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
-    //      || '    <bodyrenderer library="' || siteprofilesection.lib || '.whlib" objectname="' || GetSiteProfileXMLName(siteprofilesection.lib) || 'page" />\n'
-    //      || '  </apply>\n\n';
-    //}
+//  //}
+//  //ELSE
+//  //{
+//    //IF (NOT siteprofilesection.page_only)
+//    //{
+//    //  xml := xml
+//    //      || '  <apply>\n'
+//    //      || '    <to type="all" parenttype="' || xmlns_folder || '" />\n'
+//    //      || '    <bodyrenderer library="' || siteprofilesection.lib || '.whlib" objectname="' || GetSiteProfileXMLName(siteprofilesection.lib) || 'page" />\n'
+//    //      || '  </apply>\n\n';
+//    //}
 
-//    xml := xml
-//          || '  <apply>\n';
+////    xml := xml
+////          || '  <apply>\n';
 
-////    IF (NOT siteprofilesection.page_only AND siteprofilesection.use_rtd)
-////      xml := xml ||
-////      `.   <to type="file" parenttype="${xmlns_folder}" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" />
-////`;
+//////    IF (NOT siteprofilesection.page_only AND siteprofilesection.use_rtd)
+//////      xml := xml ||
+//////      `.   <to type="file" parenttype="${xmlns_folder}" filetype="http://www.webhare.net/xmlns/publisher/richdocumentfile" />
+//////`;
+//////    ELSE
+
+////    xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
+
+////    IF (siteprofilesection.page_only)
+////    {
+////      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />` || '\n';
+////    }
+
+////    IF (filetype_is_rtd OR siteprofilesection.use_rtd)
+////      xml := xml || '    <xsetobjecteditor name="publisher:editdocument" />\n';
 ////    ELSE
+////      xml := xml || '    <yssetobjecteditor name="publisher:propertydialog" />\n';
 
-//    xml := xml || '    <to type="file" filetype="' || xmlns_file || '" />\n';
+////    xml := xml
+////        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '" />\n'
+////        || '  </apply>\n\n';
+//  //}
 
-//    IF (siteprofilesection.page_only)
-//    {
-//      xml := xml || `    <bodyrenderer library="${siteprofilesection.lib}.whlib" objectname="${GetSiteProfileXMLName(siteprofilesection.lib)}page" />` || '\n';
-//    }
-
-//    IF (filetype_is_rtd OR siteprofilesection.use_rtd)
-//      xml := xml || '    <xsetobjecteditor name="publisher:editdocument" />\n';
-//    ELSE
-//      xml := xml || '    <yssetobjecteditor name="publisher:propertydialog" />\n';
-
-//    xml := xml
-//        || '    <extendproperties extension=".' || GetSiteProfileXMLName(siteprofilesection.lib) || '" contenttype="' || baseurl || 'filetype/' || GetSiteProfileXMLName(siteprofilesection.lib) || '" />\n'
-//        || '  </apply>\n\n';
-  //}
-
-  RETURN xml;
-}
+//  RETURN xml;
+//}
 
 PUBLIC STRING FUNCTION GenerateSiteProfileLibrary(STRING baseurl, RECORD siteprofilesection)
 {
@@ -1098,13 +1093,11 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   o := o ||
 `
-  <widgettype
-    namespace="${baseurl}widgets/${GetSiteProfileXMLName(siteprofilesection.name)}"
-    editextension="#${name}"
-    renderobjectname="${name}.whlib#${name}"
-    wittycomponent="${name}.witty:embeddedobject"
-    ${TidOrTitle(screendata.use_tids, `siteprofile.widgets.${siteprofilesection.name}.widgettype`, siteprofilesection.originaltitle)}
-    >
+  <widgettype namespace="${baseurl}widgets/${GetSiteProfileXMLName(siteprofilesection.name)}"
+              editextension="#${name}"
+              renderobjectname="${name}.whlib#${name}"
+              wittycomponent="${name}.witty:widget"
+              ${TidOrTitle(screendata.use_tids, `siteprofile.widgets.${siteprofilesection.name}.widgettype`, siteprofilesection.originaltitle)}>
     <members>
 `;
 
@@ -1120,7 +1113,7 @@ PUBLIC STRING FUNCTION GenerateSiteProfileEmbObj(STRING baseurl, RECORD siteprof
 
   FOREVERY (RECORD smember FROM members)
   {
-    o := o || "  " || GetSiteProfileMember(smember, 4);
+    o := o || GetSiteProfileMember(smember, 4);
   }
 
   o := o || '    </members>\n'
@@ -1308,10 +1301,10 @@ PUBLIC STRING FUNCTION GenerateSiteProfileWittyEmbObj(RECORD siteprofilesection)
                       : siteprofilesection.title;
 
   STRING o :=
-`[component embeddedobject]
-  <section class="embeddedobject embeddedobject--${GetSiteProfileXMLName(siteprofilesection.name)} embeddedobject--[if isrtdpreview]preview[else]site[/if]">
+`[component widget]
+  <section class="widget widget--${GetSiteProfileXMLName(siteprofilesection.name)} widget--[if isrtdpreview]preview[else]site[/if]">
     [if isrtdpreview]
-      <div class="embeddedobject__type">${typetitle}</div>
+      <div class="widget__type">${typetitle}</div>
 `;
 
   FOREVERY (RECORD spmember FROM siteprofilesection.members)
@@ -1492,9 +1485,7 @@ RECORD ARRAY FUNCTION GenerateExtraMemberCellsForWhlib(RECORD siteprofile, STRIN
       }
       CASE "richdocument"
       {
-        STRING rtdtype := CellExists(siteprofile, "add_custom_rtdtype") AND siteprofile.add_custom_rtdtype
-                          ? `${screenbaseurl}rtd/${siteprofile.lib}`
-                          : "your-general-rtd-type-url";
+        STRING rtdtype := `${screenbaseurl}widgets/${siteprofile.lib}/rtd/${siteprofmember.name}`;
 
         addrec := [ ...addrec
                   , name := siteprofmember.name

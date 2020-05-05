@@ -25,7 +25,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
 
     IF (RecordExists(prefillsettings))
     {
-      FOREVERY (STRING setting FROM ["type","baseurl","itemtitle","lib","members","use_rtd","use_tids","add_custom_rtdtype","form_tag","is_prebuilt_page","prebuilt_page_is_static"])
+      FOREVERY (STRING setting FROM ["type","baseurl","itemtitle","lib","members","use_rtd","use_tids","form_tag","is_prebuilt_page","prebuilt_page_is_static"])
       {
         IF (CellExists(prefillsettings, setting))
           GetMember(this, setting)->value := GetCell(prefillsettings, setting);
@@ -148,7 +148,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
                    , codetype := ^type->value
                    ];
 
-    FOREVERY (STRING setting FROM ["lib","use_rtd","use_tids","add_custom_rtdtype","is_prebuilt_page","prebuilt_page_is_static"])
+    FOREVERY (STRING setting FROM ["lib","use_rtd","use_tids","is_prebuilt_page","prebuilt_page_is_static"])
     {
       data := CellInsert(data, setting, GetMember(this, setting)->value);
     }
@@ -235,7 +235,7 @@ PUBLIC OBJECTTYPE Main EXTEND TolliumScreenBase
   MACRO DoSaveSettings() // save settings as HSON
   {
     STRING ARRAY settings_sa :=
-        ["baseurl","itemtitle","lib","members","type","use_rtd","use_tids","add_custom_rtdtype","form_tag","is_prebuilt_page","prebuilt_page_is_static"];
+        ["baseurl","itemtitle","lib","members","type","use_rtd","use_tids","form_tag","is_prebuilt_page","prebuilt_page_is_static"];
 
     RECORD settings;
     FOREVERY (STRING setting FROM settings_sa)
@@ -592,7 +592,7 @@ PUBLIC OBJECTTYPE CreateEmbeddedObjectFolder EXTEND TolliumScreenBase
     }
 
     this->add_js := "import './" || this->tag || "/" || this->tag || "';";
-    this->add_siteprl := '<applysiteprofile path="' || this->tag || '/' || this->tag || '.siteprl.xml" />';
+    this->add_siteprl := '  <applysiteprofile path="' || this->tag || '/' || this->tag || '.siteprl.xml" />';
 
     RETURN work->Finish();
   }
