@@ -53,7 +53,7 @@
                   <checkbox name="use_rtd" title="" label="Use an RTD as the custom file type" onchange="onanychange" value="true" />
                 </line>
                 <line layout="left">
-                  <checkbox name="is_prebuilt_page" title="" label="Add page as prebuilt page (doesn't add members currently)" onchange="onanychange" />
+                  <checkbox name="is_prebuilt_page" title="" label="Add page as prebuilt page (doesn't add members currently) (needs fix to filetype)" onchange="onanychange" enabled="false" />
                 </line>
                 <line layout="left">
                   <checkbox name="prebuilt_page_is_static" title="" label="Prebuilt page is static" onchange="onanychange" />
@@ -154,16 +154,17 @@
                 type="radio"
                 name="type"
                 title="Type"
-                flags="showarray showdatetime"
+                flags="showarray showdatetime showselect"
                 >
           <option rowkey="array" title="Array" flags="showarray" />
           <option rowkey="boolean" title="Boolean (checkbox)" />
           <option rowkey="datetime" title="Date / time" flags="showdatetime" />
           <option rowkey="image" title="Image" />
           <option rowkey="intextlink" title="Intextlink" />
-          <option rowkey="richarea" title="Richarea" />
+          <!-- <option rowkey="richarea" title="Richarea" /> -->
           <option rowkey="richdocument" title="RTD" />
-          <option rowkey="string" title="String" />
+          <option rowkey="select" title="Select (pulldown, radio)" flags="showselect" />
+          <option rowkey="string" title="String" selected="true" />
           <option rowkey="textarea" title="Textarea" />
           <option rowkey="whfsref" title="WHFS reference (file or folder)" />
         </select>
@@ -182,7 +183,6 @@
                        cellname="members"
                        name="members"
                        height="1pr"
-                       roweditscreen=".editarraymember"
                        orderable="true"
                        >
               <column type="text" name="title" title="Title" />
@@ -208,58 +208,17 @@
             </line>
           </box>
         </tab>
-      </tabs>
-      <defaultformbuttons buttons="ok cancel" />
-    </body>
-  </screen>
-
-  <!-- FIXME: How to use fragments? This screen is almost the same as editmember, only difference is we don't need array here -->
-  <screen title="Edit array member" name="editarraymember" minwidth="400px">
-    <compositions>
-      <record name="row" />
-    </compositions>
-    <body>
-      <box title="Settings">
-        <textedit composition="row" cellname="title" width="1pr" name="title" title="Title" />
-        <textedit composition="row" cellname="name" width="1pr" name="name" title="Name" required="true" />
-        <select composition="row"
-                cellname="type"
-                type="radio"
-                name="type"
-                title="Type"
-                flags="showdatetime"
-                >
-          <option rowkey="boolean" title="Boolean" />
-          <option rowkey="datetime" title="Date / time" flags="showdatetime" />
-          <option rowkey="image" title="Image" />
-          <option rowkey="intextlink" title="Intextlink" />
-          <option rowkey="richarea" title="Richarea" />
-          <option rowkey="richdocument" title="RTD" />
-          <option rowkey="string" title="String" />
-          <option rowkey="textarea" title="Textarea" />
-          <option rowkey="whfsref" title="WHFS reference (file or folder)" />
-        </select>
-        <line layout="left">
-          <checkbox composition="row" cellname="required" title="" label="This is a required field" />
-        </line>
-      </box>
-      <tabs type="server" height="1pr">
         <tab>
-          <visibleon source="type" checkflags="showdatetime" min="1" />
-          <box title="Date (time) settings" name="datetimesettings">
-            <select composition="row" cellname="type_dt_datetimetype" name="type_dt_datetimetype" type="pulldown" title="Type">
-              <option rowkey="date" title="Date (default)" selected="true" />
-              <option rowkey="datetime" title="Date + time" />
-              <option rowkey="time" title="Time" />
+          <visibleon source="type" checkflags="showselect" min="1" />
+          <box title="Select settings" name="selectsettings">
+            <select composition="row" cellname="type_selecttype" name="type_selecttype" type="pulldown" title="Type">
+              <option rowkey="pulldown" title="Pulldown" />
+              <option rowkey="radio" title="Radio" />
             </select>
-            <select composition="row" cellname="type_dt_precision" name="type_dt_precision" type="pulldown" title="Time precision">
-              <option rowkey="minutes" title="Minutes (default)" selected="true" />
-              <option rowkey="seconds" title="Seconds" />
-              <option rowkey="mlliseconds" title="Milliseconds" />
+            <select composition="row" cellname="type_optionsource" name="type_optionsource" type="radio" title="Option source">
+              <option rowkey="normal" title="Normal" />
+              <option rowkey="publisher" title="Publisher" />
             </select>
-            <line layout="left">
-              <checkbox composition="row" cellname="type_dt_storeutc" name="storeutc" title="" label="Date(time) value is stored as UTC" />
-            </line>
           </box>
         </tab>
       </tabs>
